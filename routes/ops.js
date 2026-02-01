@@ -94,6 +94,7 @@ router.post('/upload/confirm-bank', (req, res) => {
 router.get('/upload', (req, res) => {
   res.render('ops/upload', {
     title: 'Upload Bank Statement',
+    currentPage: 'upload',
     currentStep: req.session.uploadState?.step || 1
   });
 });
@@ -252,6 +253,49 @@ router.post('/ops/upload/confirm', async (req, res) => {
     });
   } catch (err) {
     console.error('Confirmation error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /ops/categories - Category management page
+router.get('/categories', async (req, res) => {
+  try {
+    const categories = await pool.query(
+      'SELECT id, name, description, system_defined FROM transaction_categories ORDER BY system_defined DESC, name ASC'
+    );
+
+    res.render('ops/categories', {
+      title: 'Categories',
+      subtitle: 'Manage transaction categories',
+      currentPage: 'categories',
+      categories: categories.rows
+    });
+  } catch (err) {
+    console.error('Categories error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /ops/banks - Bank account management page
+router.get('/banks', async (req, res) => {
+  try {
+    const accounts = await pool.query(
+      `SELECT ba.id, ba.bank_name, ba.account_type, ba.currency, ba.confirmed, c.name as country
+       FROM bank_accounts ba
+       JOIN countries c ON ba.country_id = c.id
+       WHERE ba.user_id = $1
+       ORDER BY ba.created_at DESC`,
+      [req.session.userId]
+    );
+
+    res.render('ops/banks', {
+      title: 'Bank Accounts',
+      subtitle: 'Manage your linked bank accounts',
+      currentPage: 'banks',
+      accounts: accounts.rows
+    });
+  } catch (err) {
+    console.error('Banks error:', err);
     res.status(500).json({ error: err.message });
   }
 });

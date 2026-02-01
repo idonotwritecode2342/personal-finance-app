@@ -1,0 +1,36 @@
+<h2>Linked Bank Accounts</h2>
+
+<div style="margin-top: 40px;">
+  <% if (accounts.length === 0) { %>
+    <p style="color: var(--text-secondary); text-align: center; padding: 40px;">
+      No bank accounts linked yet. <a href="/ops/upload" style="color: var(--accent); text-decoration: none;">Upload a statement</a> to add one.
+    </p>
+  <% } else { %>
+    <table style="width: 100%; border-collapse: collapse;">
+      <thead style="background: var(--bg-tertiary);">
+        <tr>
+          <th style="padding: 12px; text-align: left; font-weight: 600; color: var(--text-secondary); font-size: 12px;">Bank</th>
+          <th style="padding: 12px; text-align: left; font-weight: 600; color: var(--text-secondary); font-size: 12px;">Type</th>
+          <th style="padding: 12px; text-align: left; font-weight: 600; color: var(--text-secondary); font-size: 12px;">Country</th>
+          <th style="padding: 12px; text-align: left; font-weight: 600; color: var(--text-secondary); font-size: 12px;">Currency</th>
+          <th style="padding: 12px; text-align: center; font-weight: 600; color: var(--text-secondary); font-size: 12px;">Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% accounts.forEach(account => { %>
+        <tr style="border-bottom: 1px solid var(--border);">
+          <td style="padding: 12px;"><%= account.bank_name %></td>
+          <td style="padding: 12px; text-transform: capitalize;"><%= account.account_type %></td>
+          <td style="padding: 12px;"><%= account.country %></td>
+          <td style="padding: 12px; font-family: 'Courier New', monospace;"><%= account.currency %></td>
+          <td style="padding: 12px; text-align: center;">
+            <span style="display: inline-block; padding: 4px 8px; background: var(--accent); color: #000; border-radius: 4px; font-size: 12px; font-weight: 600;">
+              <%= account.confirmed ? 'Active' : 'Pending' %>
+            </span>
+          </td>
+        </tr>
+        <% }); %>
+      </tbody>
+    </table>
+  <% } %>
+</div>

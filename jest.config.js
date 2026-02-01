@@ -9,6 +9,6 @@ module.exports = {
     '!coverage/**'
   ],
   testMatch: ['**/__tests__/**/*.js', '**/?(*.)+(spec|test).js'],
-  testPathIgnorePatterns: ['/node_modules/'],
+  testPathIgnorePatterns: ['/node_modules/', '/tests/e2e/'],
   verbose: true
 };

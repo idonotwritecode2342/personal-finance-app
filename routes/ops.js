@@ -168,7 +168,7 @@ router.post('/upload/skip-transactions', (req, res) => {
 });
 
 // GET /ops/categories-review - Category review page
-router.get('/categories-review', (req, res) => {
+router.get('/categories-review', async (req, res) => {
   try {
     if (!req.session.uploadState || !req.session.uploadState.extractedTransactions) {
       return res.redirect('/ops/upload');
@@ -176,9 +176,16 @@ router.get('/categories-review', (req, res) => {
 
     const { extractedTransactions } = req.session.uploadState;
 
+    // Fetch categories from database
+    const categoriesResult = await pool.query(
+      'SELECT id, name FROM transaction_categories ORDER BY name ASC'
+    );
+
     res.render('ops/categories-review', {
       title: 'Review Categories',
-      transactions: extractedTransactions
+      transactions: extractedTransactions,
+      categories: categoriesResult.rows,
+      currentStep: 4
     });
   } catch (err) {
     console.error('Categories review error:', err);
@@ -186,8 +193,8 @@ router.get('/categories-review', (req, res) => {
   }
 });
 
-// POST /ops/upload/confirm - Final confirmation and save
-router.post('/ops/upload/confirm', async (req, res) => {
+// POST /upload/confirm - Final confirmation and save
+router.post('/upload/confirm', async (req, res) => {
   try {
     const { categorizedTransactions } = req.body;
 

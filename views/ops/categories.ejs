@@ -1,0 +1,56 @@
+<h2>Manage Categories</h2>
+
+<div style="margin-top: 40px;">
+  <h3 style="font-size: 16px; margin-bottom: 20px;">System Categories</h3>
+
+  <table style="width: 100%; border-collapse: collapse;">
+    <thead style="background: var(--bg-tertiary);">
+      <tr>
+        <th style="padding: 12px; text-align: left; font-weight: 600; color: var(--text-secondary); font-size: 12px;">Name</th>
+        <th style="padding: 12px; text-align: left; font-weight: 600; color: var(--text-secondary); font-size: 12px;">Description</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% categories.filter(c => c.system_defined).forEach(cat => { %>
+      <tr style="border-bottom: 1px solid var(--border);">
+        <td style="padding: 12px;"><%= cat.name %></td>
+        <td style="padding: 12px; color: var(--text-secondary);"><%= cat.description %></td>
+      </tr>
+      <% }); %>
+    </tbody>
+  </table>
+</div>
+
+<% if (categories.some(c => !c.system_defined)) { %>
+<div style="margin-top: 40px;">
+  <h3 style="font-size: 16px; margin-bottom: 20px;">Custom Categories</h3>
+  <table style="width: 100%; border-collapse: collapse;">
+    <thead style="background: var(--bg-tertiary);">
+      <tr>
+        <th style="padding: 12px; text-align: left; font-weight: 600; color: var(--text-secondary); font-size: 12px;">Name</th>
+        <th style="padding: 12px; text-align: left; font-weight: 600; color: var(--text-secondary); font-size: 12px;">Description</th>
+        <th style="padding: 12px; text-align: center; font-weight: 600; color: var(--text-secondary); font-size: 12px;">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% categories.filter(c => !c.system_defined).forEach(cat => { %>
+      <tr style="border-bottom: 1px solid var(--border);">
+        <td style="padding: 12px;"><%= cat.name %></td>
+        <td style="padding: 12px; color: var(--text-secondary);"><%= cat.description %></td>
+        <td style="padding: 12px; text-align: center;">
+          <button style="padding: 6px 12px; background: #ef4444; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">Delete</button>
+        </td>
+      </tr>
+      <% }); %>
+    </tbody>
+  </table>
+</div>
+<% } %>
+
+<div style="margin-top: 40px; padding: 20px; background: var(--bg-secondary); border-radius: 8px; border: 1px dashed var(--border);">
+  <h3 style="font-size: 14px; margin-bottom: 12px;">Add Custom Category</h3>
+  <form style="display: flex; gap: 12px;">
+    <input type="text" placeholder="Category name" style="flex: 1; padding: 10px; background: var(--bg-tertiary); border: 1px solid var(--border); border-radius: 4px; color: var(--text-primary);">
+    <button type="submit" style="padding: 10px 20px; background: var(--accent); color: #000; border: none; border-radius: 4px; cursor: pointer; font-weight: 600;">Add</button>
+  </form>
+</div>

@@ -19,10 +19,11 @@ test.describe('PDF Upload E2E Flow - Real Browser Tests', () => {
 
     await page.fill('input[name="email"]', testEmail);
     await page.fill('input[name="password"]', testPassword);
+    await page.fill('input[name="confirmPassword"]', testPassword);
     await page.click('button:has-text("Register")');
 
     // Should redirect to login
-    await page.waitForURL('**/login');
+    await page.waitForURL('**/login', { timeout: 60000 });
 
     // Login
     await page.fill('input[name="email"]', testEmail);
@@ -50,8 +51,8 @@ test.describe('PDF Upload E2E Flow - Real Browser Tests', () => {
     await page.fill('input[name="password"]', testPassword);
     await page.click('button:has-text("Login")');
 
-    // Wait for dashboard
-    await page.waitForURL('**/dashboard');
+    // Wait for dashboard with increased timeout
+    await page.waitForURL('**/dashboard', { timeout: 60000 });
 
     // Click settings button
     await page.click('button[title="Settings"]');

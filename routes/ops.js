@@ -99,6 +99,8 @@ router.get('/upload', (req, res) => {
 });
 
 const { extractTransactionsFromText } = require('../lib/llm-extractor');
+const { insertTransactions, getCategoryByName } = require('../db/transactions');
+const pool = require('../db/connection');
 
 // POST /ops/upload/extract-transactions - Extract from LLM
 router.post('/upload/extract-transactions', async (req, res) => {
@@ -160,6 +162,96 @@ router.post('/upload/skip-transactions', (req, res) => {
 
     res.json({ success: true, step: 4 });
   } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /ops/categories-review - Category review page
+router.get('/categories-review', (req, res) => {
+  try {
+    if (!req.session.uploadState || !req.session.uploadState.extractedTransactions) {
+      return res.redirect('/ops/upload');
+    }
+
+    const { extractedTransactions } = req.session.uploadState;
+
+    res.render('ops/categories-review', {
+      title: 'Review Categories',
+      transactions: extractedTransactions
+    });
+  } catch (err) {
+    console.error('Categories review error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /ops/upload/confirm - Final confirmation and save
+router.post('/ops/upload/confirm', async (req, res) => {
+  try {
+    const { categorizedTransactions } = req.body;
+
+    if (!req.session.uploadState) {
+      return res.status(400).json({ error: 'No upload in progress' });
+    }
+
+    const { userId, extractedTransactions, bank, country } = req.session.uploadState;
+
+    // Create or get bank account
+    let bankAccountId;
+    const bankResult = await pool.query(
+      `SELECT id FROM bank_accounts
+       WHERE user_id = $1 AND LOWER(bank_name) = LOWER($2) AND country_id = (SELECT id FROM countries WHERE code = $3)`,
+      [userId, bank, country]
+    );
+
+    if (bankResult.rows.length > 0) {
+      bankAccountId = bankResult.rows[0].id;
+    } else {
+      const countryResult = await pool.query(
+        'SELECT id FROM countries WHERE code = $1',
+        [country]
+      );
+
+      const newBankResult = await pool.query(
+        `INSERT INTO bank_accounts (user_id, country_id, bank_name, account_type, currency, confirmed)
+         VALUES ($1, $2, $3, $4, $5, true)
+         RETURNING id`,
+        [userId, countryResult.rows[0].id, bank, 'checking', country === 'UK' ? 'GBP' : 'INR']
+      );
+
+      bankAccountId = newBankResult.rows[0].id;
+    }
+
+    // Merge categorized data with extracted transactions
+    const transactionsToSave = extractedTransactions.map((tx, idx) => {
+      const categorizedTx = categorizedTransactions[idx];
+      return {
+        ...tx,
+        category_id: categorizedTx?.category_id || null,
+        currency: country === 'UK' ? 'GBP' : 'INR'
+      };
+    });
+
+    // Insert transactions
+    const inserted = await insertTransactions(userId, transactionsToSave, bankAccountId);
+
+    // Record PDF upload
+    await pool.query(
+      `INSERT INTO pdf_uploads (user_id, bank_account_id, file_name, bank_detected, transaction_count, upload_status)
+       VALUES ($1, $2, $3, $4, $5, 'processed')`,
+      [userId, bankAccountId, req.session.uploadState.fileName, bank, inserted.length]
+    );
+
+    // Clear session
+    delete req.session.uploadState;
+
+    res.json({
+      success: true,
+      transactionsImported: inserted.length,
+      redirect: '/dashboard?imported=' + inserted.length
+    });
+  } catch (err) {
+    console.error('Confirmation error:', err);
     res.status(500).json({ error: err.message });
   }
 });

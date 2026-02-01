@@ -173,11 +173,21 @@ See `/docs/plans/2026-02-01-mvp-1-0-design.md` for full design document.
 
 ---
 
+## Testing Protocol
+
+**At the end of each feature implementation:**
+1. All automated tests must pass (npm test)
+2. Start the application locally: `npm run dev`
+3. Ask the user to manually test the feature
+4. Get user approval before merging to main
+
+This ensures quality and user satisfaction before deployment.
+
 ## Current Status
 
-**Phase:** Design Complete - Ready for Implementation
+**Phase:** MVP 1.0 Foundation Complete - Ready for User Testing
 **Last Updated:** 2026-02-01
-**Next Step:** Begin MVP 1.0 implementation using Ralph Loop
+**Next Step:** Launch locally for user testing, then proceed with next feature
 
 ---
 

@@ -1,14 +1,30 @@
 {
-  "name": "nodejs-app",
+  "name": "personal-finance",
   "version": "1.0.0",
-  "description": "A minimal Node.js web application.",
+  "description": "Personal Finance Mission Control System",
   "main": "app.js",
-  "author": "alphasec",
+  "author": "Tanveer & Wife",
   "license": "MIT",
   "dependencies": {
-    "express": "^4.19.2"
+    "express": "^4.19.2",
+    "pg": "^8.11.3",
+    "bcryptjs": "^2.4.3",
+    "express-session": "^1.17.3",
+    "connect-pg-simple": "^9.0.1",
+    "dotenv": "^16.3.1",
+    "body-parser": "^1.20.2"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "supertest": "^6.3.3",
+    "@playwright/test": "^1.40.1"
   },
   "scripts": {
-    "start": "node app.js"
+    "start": "node app.js",
+    "dev": "NODE_ENV=development node app.js",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "db:migrate": "node scripts/migrate.js"
   }
 }

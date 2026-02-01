@@ -9,7 +9,7 @@ const {
 
 const router = express.Router();
 
-// GET dashboard
+// GET classic dashboard
 router.get('/', async (req, res) => {
   try {
     const userId = req.session.userId;
@@ -43,6 +43,16 @@ router.get('/', async (req, res) => {
   } catch (err) {
     console.error('Dashboard error:', err);
     res.render('error', { title: 'Error', message: 'Could not load dashboard' });
+  }
+});
+
+// GET net worth dashboard
+router.get('/net-worth', async (req, res) => {
+  try {
+    res.render('net-worth-dashboard', { title: 'Net Worth Dashboard' });
+  } catch (err) {
+    console.error('Net worth dashboard error:', err);
+    res.render('error', { title: 'Error', message: 'Could not load net worth dashboard' });
   }
 });
 

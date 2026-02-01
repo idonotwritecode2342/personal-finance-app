@@ -98,4 +98,70 @@ router.get('/upload', (req, res) => {
   });
 });
 
+const { extractTransactionsFromText } = require('../lib/llm-extractor');
+
+// POST /ops/upload/extract-transactions - Extract from LLM
+router.post('/upload/extract-transactions', async (req, res) => {
+  try {
+    if (!req.session.uploadState) {
+      return res.status(400).json({ error: 'No upload in progress' });
+    }
+
+    const { statementText } = req.session.uploadState;
+    const extracted = await extractTransactionsFromText(statementText);
+    req.session.uploadState.extractedTransactions = extracted.transactions || [];
+    req.session.uploadState.step = 3;
+
+    res.json({
+      success: true,
+      step: 3,
+      transactions: extracted.transactions || [],
+      count: (extracted.transactions || []).length
+    });
+  } catch (err) {
+    console.error('Extraction error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /ops/preview - Preview extracted transactions
+router.get('/preview', (req, res) => {
+  try {
+    if (!req.session.uploadState || !req.session.uploadState.extractedTransactions) {
+      return res.redirect('/ops/upload');
+    }
+
+    const { extractedTransactions, bank, country } = req.session.uploadState;
+
+    res.render('ops/preview', {
+      title: 'Review Transactions',
+      transactions: extractedTransactions,
+      bank,
+      country,
+      count: extractedTransactions.length
+    });
+  } catch (err) {
+    console.error('Preview error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /ops/upload/skip-transactions - Mark transactions to skip
+router.post('/upload/skip-transactions', (req, res) => {
+  try {
+    const { skippedIds } = req.body;
+
+    if (!req.session.uploadState) {
+      return res.status(400).json({ error: 'No upload in progress' });
+    }
+
+    req.session.uploadState.skippedTransactionIds = skippedIds || [];
+    req.session.uploadState.step = 4;
+
+    res.json({ success: true, step: 4 });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;

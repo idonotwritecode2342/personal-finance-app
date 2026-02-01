@@ -499,6 +499,8 @@
           bankDetectedValue.textContent = data.bankDetection.bank;
           confidence.textContent = 'Confidence: ' + (data.bankDetection.confidence * 100).toFixed(0) + '%';
           bankSelect.value = data.bankDetection.bank;
+          // Enable button since bank is already selected
+          submitBtn2.disabled = false;
         }
 
         // Move to Step 2

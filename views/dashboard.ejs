@@ -864,6 +864,11 @@
       // In production, this would reload dashboard with new currency
       console.log('Selected country:', e.target.value);
     });
+
+    // Settings button (gear icon)
+    document.querySelector('button[title="Settings"]').addEventListener('click', function() {
+      window.location.href = '/ops/upload';
+    });
   </script>
 </body>
 </html>

@@ -518,6 +518,18 @@
             throw new Error(data.error || 'Confirmation failed');
           }
 
+          // Extract transactions from LLM
+          const extractResponse = await fetch('/ops/upload/extract-transactions', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+          });
+
+          const extractData = await extractResponse.json();
+
+          if (!extractResponse.ok) {
+            throw new Error(extractData.error || 'Transaction extraction failed');
+          }
+
           // Redirect to Step 3
           window.location.href = '/ops/preview';
 

@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %></title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg-primary: #1a1a1a;
+      --bg-secondary: #252525;
+      --bg-tertiary: #2d2d2d;
+      --accent: #22c55e;
+      --text-primary: #ffffff;
+      --text-secondary: #b0b0b0;
+      --border: #3a3a3a;
+    }
+
+    body {
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      padding: 40px 20px;
+    }
+
+    .header {
+      max-width: 1200px;
+      margin: 0 auto 40px;
+    }
+
+    .back-link {
+      color: var(--accent);
+      text-decoration: none;
+      font-size: 14px;
+      margin-bottom: 20px;
+      display: inline-block;
+    }
+
+    h1 {
+      font-size: 32px;
+      margin-bottom: 10px;
+    }
+
+    .subtitle {
+      color: var(--text-secondary);
+      font-size: 14px;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .filters-card {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+
+    .filters-card h2 {
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-secondary);
+      margin-bottom: 20px;
+    }
+
+    .filters-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .filter-group {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .filter-group label {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+    }
+
+    .filter-group input,
+    .filter-group select {
+      padding: 10px 12px;
+      background: var(--bg-primary);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text-primary);
+      font-size: 14px;
+    }
+
+    .filter-group input:focus,
+    .filter-group select:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    .filter-buttons {
+      display: flex;
+      gap: 12px;
+    }
+
+    .btn {
+      padding: 10px 24px;
+      border-radius: 6px;
+      border: none;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #000;
+    }
+
+    .btn-primary:hover {
+      background: #16a34a;
+      box-shadow: 0 8px 16px rgba(34, 197, 94, 0.2);
+    }
+
+    .btn-secondary {
+      background: transparent;
+      color: var(--text-secondary);
+      border: 1px solid var(--border);
+    }
+
+    .btn-secondary:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .transactions-card {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 24px;
+      overflow-x: auto;
+    }
+
+    .transactions-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .transactions-header h2 {
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-secondary);
+    }
+
+    .transaction-count {
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+
+    thead {
+      background: var(--bg-tertiary);
+      position: sticky;
+      top: 0;
+    }
+
+    th {
+      padding: 12px;
+      text-align: left;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      font-size: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    td {
+      padding: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    tbody tr {
+      transition: background 0.2s ease;
+    }
+
+    tbody tr:hover {
+      background: var(--bg-tertiary);
+    }
+
+    .date {
+      font-family: 'Courier New', monospace;
+      color: var(--text-secondary);
+    }
+
+    .amount {
+      font-family: 'Courier New', monospace;
+      font-weight: 600;
+      text-align: right;
+    }
+
+    .debit {
+      color: #ef4444;
+    }
+
+    .credit {
+      color: var(--accent);
+    }
+
+    .merchant {
+      font-weight: 500;
+    }
+
+    .category {
+      display: inline-block;
+      padding: 4px 8px;
+      background: var(--bg-tertiary);
+      border-radius: 4px;
+      font-size: 12px;
+    }
+
+    .bank {
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--text-secondary);
+    }
+
+    .empty-state p {
+      margin-bottom: 16px;
+    }
+
+    .pagination {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      margin-top: 24px;
+      flex-wrap: wrap;
+    }
+
+    .pagination a,
+    .pagination span {
+      padding: 8px 12px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 14px;
+      transition: all 0.2s ease;
+    }
+
+    .pagination a:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .pagination .current {
+      background: var(--accent);
+      color: #000;
+      border-color: var(--accent);
+    }
+
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .stat-card {
+      background: var(--bg-tertiary);
+      padding: 16px;
+      border-radius: 8px;
+      border-left: 3px solid var(--accent);
+    }
+
+    .stat-label {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+    }
+
+    .stat-value {
+      font-size: 24px;
+      font-weight: 600;
+      font-family: 'Courier New', monospace;
+      color: var(--accent);
+    }
+
+    @media (max-width: 768px) {
+      .filters-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .filter-buttons {
+        flex-direction: column;
+      }
+
+      .btn {
+        width: 100%;
+      }
+
+      table {
+        font-size: 12px;
+      }
+
+      th, td {
+        padding: 8px;
+      }
+
+      .transactions-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <a href="/dashboard" class="back-link">← Back to Dashboard</a>
+    <h1>📊 All Transactions</h1>
+    <p class="subtitle">View and filter your transaction history</p>
+  </div>
+
+  <div class="container">
+    <!-- Filters -->
+    <div class="filters-card">
+      <h2>Filters</h2>
+      <form id="filterForm" method="GET" action="/dashboard/transactions">
+        <div class="filters-grid">
+          <div class="filter-group">
+            <label for="category">Category</label>
+            <select id="category" name="category">
+              <option value="all">All Categories</option>
+              <% categories.forEach(cat => { %>
+              <option value="<%= cat %>" <%= currentCategory === cat ? 'selected' : '' %>>
+                <%= cat %>
+              </option>
+              <% }); %>
+            </select>
+          </div>
+
+          <div class="filter-group">
+            <label for="fromDate">From Date</label>
+            <input type="date" id="fromDate" name="fromDate" value="<%= fromDate %>">
+          </div>
+
+          <div class="filter-group">
+            <label for="toDate">To Date</label>
+            <input type="date" id="toDate" name="toDate" value="<%= toDate %>">
+          </div>
+
+          <div class="filter-group">
+            <label for="minAmount">Min Amount</label>
+            <input type="number" id="minAmount" name="minAmount" step="0.01" placeholder="0.00" value="<%= minAmount %>">
+          </div>
+
+          <div class="filter-group">
+            <label for="maxAmount">Max Amount</label>
+            <input type="number" id="maxAmount" name="maxAmount" step="0.01" placeholder="999999.99" value="<%= maxAmount %>">
+          </div>
+        </div>
+
+        <div class="filter-buttons">
+          <button type="submit" class="btn btn-primary">Apply Filters</button>
+          <a href="/dashboard/transactions" class="btn btn-secondary">Clear Filters</a>
+        </div>
+      </form>
+    </div>
+
+    <!-- Stats -->
+    <% if (transactions.length > 0) { %>
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-label">Total Transactions</div>
+        <div class="stat-value"><%= totalCount %></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Showing</div>
+        <div class="stat-value"><%= transactions.length %></div>
+      </div>
+    </div>
+    <% } %>
+
+    <!-- Transactions Table -->
+    <div class="transactions-card">
+      <div class="transactions-header">
+        <h2>Transaction History</h2>
+        <span class="transaction-count">
+          Showing <%= (page - 1) * 50 + 1 %>–<%= Math.min(page * 50, totalCount) %> of <%= totalCount %>
+        </span>
+      </div>
+
+      <% if (transactions.length === 0) { %>
+      <div class="empty-state">
+        <p>No transactions found matching your filters.</p>
+        <a href="/dashboard/transactions" class="btn btn-secondary">Clear Filters</a>
+      </div>
+      <% } else { %>
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Merchant</th>
+            <th>Amount</th>
+            <th>Category</th>
+            <th>Bank</th>
+            <th>Type</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% transactions.forEach(tx => { %>
+          <tr>
+            <td class="date"><%= new Date(tx.transaction_date).toLocaleDateString() %></td>
+            <td class="merchant"><%= tx.merchant %></td>
+            <td class="amount <%= tx.transaction_type === 'debit' ? 'debit' : 'credit' %>">
+              <%= tx.transaction_type === 'debit' ? '-' : '+' %> <%= Math.abs(tx.amount).toFixed(2) %> <%= tx.currency %>
+            </td>
+            <td>
+              <% if (tx.category) { %>
+              <span class="category"><%= tx.category %></span>
+              <% } else { %>
+              <span class="category" style="opacity: 0.5;">Uncategorized</span>
+              <% } %>
+            </td>
+            <td class="bank"><%= tx.bank_name %></td>
+            <td style="text-transform: capitalize;"><%= tx.transaction_type %></td>
+          </tr>
+          <% }); %>
+        </tbody>
+      </table>
+      <% } %>
+
+      <!-- Pagination -->
+      <% if (totalPages > 1) { %>
+      <div class="pagination">
+        <% if (page > 1) { %>
+        <a href="/dashboard/transactions?page=1<%= currentCategory !== 'all' ? '&category=' + currentCategory : '' %><%= fromDate ? '&fromDate=' + fromDate : '' %><%= toDate ? '&toDate=' + toDate : '' %><%= minAmount ? '&minAmount=' + minAmount : '' %><%= maxAmount ? '&maxAmount=' + maxAmount : '' %>">
+          First
+        </a>
+        <a href="/dashboard/transactions?page=<%= page - 1 %><%= currentCategory !== 'all' ? '&category=' + currentCategory : '' %><%= fromDate ? '&fromDate=' + fromDate : '' %><%= toDate ? '&toDate=' + toDate : '' %><%= minAmount ? '&minAmount=' + minAmount : '' %><%= maxAmount ? '&maxAmount=' + maxAmount : '' %>">
+          Previous
+        </a>
+        <% } %>
+
+        <% for (let i = Math.max(1, page - 2); i <= Math.min(totalPages, page + 2); i++) { %>
+        <% if (i === page) { %>
+        <span class="current"><%= i %></span>
+        <% } else { %>
+        <a href="/dashboard/transactions?page=<%= i %><%= currentCategory !== 'all' ? '&category=' + currentCategory : '' %><%= fromDate ? '&fromDate=' + fromDate : '' %><%= toDate ? '&toDate=' + toDate : '' %><%= minAmount ? '&minAmount=' + minAmount : '' %><%= maxAmount ? '&maxAmount=' + maxAmount : '' %>">
+          <%= i %>
+        </a>
+        <% } %>
+        <% } %>
+
+        <% if (page < totalPages) { %>
+        <a href="/dashboard/transactions?page=<%= page + 1 %><%= currentCategory !== 'all' ? '&category=' + currentCategory : '' %><%= fromDate ? '&fromDate=' + fromDate : '' %><%= toDate ? '&toDate=' + toDate : '' %><%= minAmount ? '&minAmount=' + minAmount : '' %><%= maxAmount ? '&maxAmount=' + maxAmount : '' %>">
+          Next
+        </a>
+        <a href="/dashboard/transactions?page=<%= totalPages %><%= currentCategory !== 'all' ? '&category=' + currentCategory : '' %><%= fromDate ? '&fromDate=' + fromDate : '' %><%= toDate ? '&toDate=' + toDate : '' %><%= minAmount ? '&minAmount=' + minAmount : '' %><%= maxAmount ? '&maxAmount=' + maxAmount : '' %>">
+          Last
+        </a>
+        <% } %>
+      </div>
+      <% } %>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,759 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Personal Finance Dashboard Playground</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #0f0f0f;
+            color: #e0e0e0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            overflow: hidden;
+        }
+
+        .container {
+            display: grid;
+            grid-template-columns: 320px 1fr 1fr;
+            height: 100vh;
+            gap: 12px;
+            padding: 12px;
+        }
+
+        /* Controls Panel */
+        .controls {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 16px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .control-group label {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: #888;
+            letter-spacing: 0.5px;
+        }
+
+        .control-group select,
+        .control-group input[type="color"] {
+            background: #2a2a2a;
+            border: 1px solid #333;
+            border-radius: 4px;
+            color: #e0e0e0;
+            padding: 6px 8px;
+            font-size: 13px;
+        }
+
+        .control-group select:hover,
+        .control-group input[type="color"]:hover {
+            border-color: #444;
+        }
+
+        .card-toggles {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .toggle-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .toggle-item input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+            accent-color: var(--accent-color);
+        }
+
+        .toggle-item label {
+            font-size: 13px;
+            font-weight: 400;
+            text-transform: none;
+            color: #e0e0e0;
+            letter-spacing: 0;
+            cursor: pointer;
+            margin: 0;
+        }
+
+        .presets {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .preset-btn {
+            background: #2a2a2a;
+            border: 1px solid #333;
+            border-radius: 4px;
+            color: #e0e0e0;
+            padding: 8px 12px;
+            font-size: 12px;
+            cursor: pointer;
+            text-align: left;
+            transition: all 0.2s;
+        }
+
+        .preset-btn:hover {
+            background: #333;
+            border-color: #444;
+        }
+
+        .preset-btn.active {
+            background: var(--accent-color);
+            border-color: var(--accent-color);
+            color: #1a1a1a;
+        }
+
+        /* Preview Panel */
+        .preview-container {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .preview-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid #333;
+        }
+
+        .preview-title {
+            font-size: 24px;
+            font-weight: 600;
+            color: #e0e0e0;
+        }
+
+        .preview-subtitle {
+            font-size: 13px;
+            color: #666;
+        }
+
+        .preview-controls {
+            display: flex;
+            gap: 8px;
+        }
+
+        .icon-btn {
+            width: 32px;
+            height: 32px;
+            background: #2a2a2a;
+            border: 1px solid #333;
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+        }
+
+        .icon-btn:hover {
+            background: #333;
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 16px;
+        }
+
+        .card {
+            background: #252525;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .card.hero {
+            grid-column: 1;
+            padding: 32px;
+            border: 2px solid #333;
+        }
+
+        .hero-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 32px;
+        }
+
+        .hero-left {
+            flex: 1;
+        }
+
+        .hero-right {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .hero-value {
+            font-size: 56px;
+            font-weight: 700;
+            color: #e0e0e0;
+            font-family: 'Courier New', monospace;
+            margin: 12px 0;
+        }
+
+        .hero-change {
+            font-size: 18px;
+            color: var(--accent-color);
+            font-weight: 600;
+            font-family: 'Courier New', monospace;
+        }
+
+        .hero-chart {
+            height: 120px;
+            background: linear-gradient(135deg, rgba(34, 197, 94, 0.1) 0%, rgba(34, 197, 94, 0.05) 100%);
+            border-radius: 6px;
+            border: 1px solid #333;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .chart-line {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            height: 80px;
+            border-bottom: 2px solid var(--accent-color);
+            border-left: 2px solid var(--accent-color);
+            opacity: 0.6;
+        }
+
+        .supporting-cards {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin-top: 12px;
+        }
+
+        .card.supporting {
+            padding: 16px;
+        }
+
+        .card.supporting .card-value {
+            font-size: 24px;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .card-title {
+            font-size: 13px;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: #888;
+            letter-spacing: 0.5px;
+        }
+
+        .card-meta {
+            font-size: 11px;
+            color: #666;
+        }
+
+        .card-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: #e0e0e0;
+            font-family: 'Courier New', monospace;
+        }
+
+        .card-subvalue {
+            font-size: 13px;
+            color: #999;
+            font-family: 'Courier New', monospace;
+        }
+
+        .card-chart {
+            height: 40px;
+            background: linear-gradient(to right, var(--accent-color), var(--accent-color));
+            border-radius: 4px;
+            opacity: 0.3;
+            margin-top: 8px;
+        }
+
+        .card-accent {
+            color: var(--accent-color);
+        }
+
+        .card-stat {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            padding: 6px 0;
+            border-top: 1px solid #333;
+        }
+
+        .card-stat:first-of-type {
+            border-top: none;
+            padding-top: 0;
+        }
+
+        .stat-label {
+            color: #888;
+        }
+
+        .stat-value {
+            color: #e0e0e0;
+            font-family: 'Courier New', monospace;
+        }
+
+        /* Prompt Output Panel */
+        .prompt-panel {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .prompt-label {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: #888;
+            letter-spacing: 0.5px;
+        }
+
+        .prompt-output {
+            background: #2a2a2a;
+            border: 1px solid #333;
+            border-radius: 4px;
+            padding: 12px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            line-height: 1.5;
+            color: #b0b0b0;
+            min-height: 80px;
+            max-height: 120px;
+            overflow-y: auto;
+            word-wrap: break-word;
+        }
+
+        .copy-btn {
+            background: var(--accent-color);
+            border: none;
+            border-radius: 4px;
+            color: #1a1a1a;
+            padding: 8px 12px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .copy-btn:hover {
+            opacity: 0.9;
+        }
+
+        .copy-btn.copied {
+            background: #666;
+            color: #fff;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #333;
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #444;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Controls Panel -->
+        <div class="controls">
+            <div>
+                <h3 style="font-size: 14px; margin-bottom: 12px; color: #e0e0e0;">Dashboard Config</h3>
+            </div>
+
+            <div class="control-group">
+                <label>Accent Color</label>
+                <input type="color" id="accentColor" value="#22c55e">
+            </div>
+
+            <div class="control-group">
+                <label>Card Columns</label>
+                <select id="columns">
+                    <option value="1">1 Column</option>
+                    <option value="2" selected>2 Columns</option>
+                    <option value="3">3 Columns</option>
+                    <option value="auto">Auto (Responsive)</option>
+                </select>
+            </div>
+
+            <div class="control-group">
+                <label>Supporting Cards</label>
+                <div class="card-toggles">
+                    <div class="toggle-item">
+                        <input type="checkbox" id="card-spending" checked>
+                        <label for="card-spending">Monthly Spending</label>
+                    </div>
+                    <div class="toggle-item">
+                        <input type="checkbox" id="card-savings" checked>
+                        <label for="card-savings">Savings Progress</label>
+                    </div>
+                    <div class="toggle-item">
+                        <input type="checkbox" id="card-portfolio" checked>
+                        <label for="card-portfolio">Investment Breakdown</label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <label>Chart Style</label>
+                <select id="chartStyle">
+                    <option value="line" selected>Line Chart</option>
+                    <option value="area">Area Chart</option>
+                    <option value="bars">Bar Chart</option>
+                </select>
+            </div>
+
+            <div style="border-top: 1px solid #333; padding-top: 12px;">
+                <label style="font-size: 11px; font-weight: 600; text-transform: uppercase; color: #888; display: block; margin-bottom: 8px; letter-spacing: 0.5px;">Presets</label>
+                <div class="presets">
+                    <button class="preset-btn active" data-preset="clean">Clean Focus</button>
+                    <button class="preset-btn" data-preset="complete">Complete View</button>
+                    <button class="preset-btn" data-preset="minimal">Minimal</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Preview Panel -->
+        <div class="preview-container" style="grid-column: 2;">
+            <div class="preview-header">
+                <div>
+                    <div class="preview-title">Mission Control</div>
+                    <div class="preview-subtitle">Personal Finance Dashboard</div>
+                </div>
+                <div class="preview-controls">
+                    <button class="icon-btn">⚙️</button>
+                    <button class="icon-btn">⋮</button>
+                </div>
+            </div>
+            <div class="dashboard" id="dashboard"></div>
+        </div>
+
+        <!-- Prompt Output Panel -->
+        <div class="prompt-panel">
+            <div>
+                <div class="prompt-label">Prompt Output</div>
+                <div class="prompt-output" id="promptOutput"></div>
+            </div>
+            <button class="copy-btn" id="copyBtn">Copy Prompt</button>
+        </div>
+    </div>
+
+    <script>
+        // State management
+        const state = {
+            accentColor: '#22c55e',
+            chartStyle: 'line',
+            cards: {
+                spending: true,
+                savings: true,
+                portfolio: true
+            }
+        };
+
+        // Card templates
+        const cardTemplates = {
+            hero: {
+                title: 'Net Worth',
+                value: '£524,320',
+                change: '+£8,240 this month',
+                meta: 'Last updated now',
+                yearChange: '+£42,100 this year'
+            },
+            spending: {
+                title: 'Monthly Spending',
+                value: '£3,840',
+                meta: 'This month',
+                stats: [
+                    { label: 'Food & Groceries', value: '£680' },
+                    { label: 'Transport', value: '£420' }
+                ]
+            },
+            savings: {
+                title: 'Savings Progress',
+                value: '32%',
+                meta: 'Of monthly income',
+                stats: [
+                    { label: 'Target', value: '30%' },
+                    { label: 'Saved', value: '£4,120' }
+                ]
+            },
+            portfolio: {
+                title: 'Investment Breakdown',
+                value: '£187,450',
+                meta: 'Total invested',
+                stats: [
+                    { label: 'Stocks & ETFs', value: '£145,320' },
+                    { label: 'Cash', value: '£42,130' }
+                ]
+            }
+        };
+
+        // Initialize
+        function init() {
+            setupListeners();
+            render();
+        }
+
+        function setupListeners() {
+            document.getElementById('accentColor').addEventListener('change', (e) => {
+                state.accentColor = e.target.value;
+                updateTheme();
+                render();
+            });
+
+            document.getElementById('chartStyle').addEventListener('change', (e) => {
+                state.chartStyle = e.target.value;
+                render();
+            });
+
+            document.querySelectorAll('.toggle-item input[type="checkbox"]').forEach(checkbox => {
+                checkbox.addEventListener('change', (e) => {
+                    const cardName = e.target.id.replace('card-', '');
+                    state.cards[cardName] = e.target.checked;
+                    render();
+                });
+            });
+
+            document.querySelectorAll('.preset-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+                    e.target.classList.add('active');
+                    applyPreset(e.target.dataset.preset);
+                });
+            });
+        }
+
+        function updateTheme() {
+            document.documentElement.style.setProperty('--accent-color', state.accentColor);
+        }
+
+        function applyPreset(preset) {
+            const presets = {
+                clean: {
+                    accentColor: '#22c55e',
+                    chartStyle: 'line',
+                    cards: { spending: true, savings: true, portfolio: true }
+                },
+                complete: {
+                    accentColor: '#3b82f6',
+                    chartStyle: 'area',
+                    cards: { spending: true, savings: true, portfolio: true }
+                },
+                minimal: {
+                    accentColor: '#22c55e',
+                    chartStyle: 'line',
+                    cards: { spending: false, savings: true, portfolio: false }
+                }
+            };
+
+            Object.assign(state, presets[preset]);
+            updateTheme();
+            updateControls();
+            render();
+        }
+
+        function updateControls() {
+            document.getElementById('accentColor').value = state.accentColor;
+            document.getElementById('chartStyle').value = state.chartStyle;
+            document.querySelectorAll('.toggle-item input[type="checkbox"]').forEach(checkbox => {
+                const cardName = checkbox.id.replace('card-', '');
+                checkbox.checked = state.cards[cardName];
+            });
+        }
+
+        function render() {
+            renderDashboard();
+            updatePrompt();
+        }
+
+        function renderDashboard() {
+            const dashboard = document.getElementById('dashboard');
+            dashboard.innerHTML = '';
+
+            // Create hero card
+            const heroCard = createHeroCard(cardTemplates.hero);
+            dashboard.appendChild(heroCard);
+
+            // Create supporting cards container
+            const supportingContainer = document.createElement('div');
+            supportingContainer.className = 'supporting-cards';
+
+            Object.entries(state.cards).forEach(([key, enabled]) => {
+                if (!enabled) return;
+                const template = cardTemplates[key];
+                const card = createSupportingCard(template);
+                supportingContainer.appendChild(card);
+            });
+
+            dashboard.appendChild(supportingContainer);
+        }
+
+        function createHeroCard(template) {
+            const card = document.createElement('div');
+            card.className = 'card hero';
+            card.innerHTML = `
+                <div class="card-header">
+                    <div class="card-title">${template.title}</div>
+                    <div class="card-meta">${template.meta}</div>
+                </div>
+                <div class="hero-content">
+                    <div class="hero-left">
+                        <div class="hero-value">${template.value}</div>
+                        <div class="hero-change">${template.change}</div>
+                        <div style="font-size: 12px; color: #666; margin-top: 8px;">${template.yearChange}</div>
+                    </div>
+                    <div class="hero-right">
+                        <div class="hero-chart">
+                            <div class="chart-line"></div>
+                        </div>
+                        <div style="font-size: 11px; color: #666;">Trend over 12 months</div>
+                    </div>
+                </div>
+            `;
+            return card;
+        }
+
+        function createSupportingCard(template) {
+            const card = document.createElement('div');
+            card.className = 'card supporting';
+            card.innerHTML = `
+                <div class="card-header">
+                    <div class="card-title">${template.title}</div>
+                </div>
+                <div class="card-value">${template.value}</div>
+                <div style="font-size: 11px; color: #666; margin-bottom: 8px;">${template.meta}</div>
+                ${template.stats.map(stat => `
+                    <div class="card-stat">
+                        <span class="stat-label">${stat.label}</span>
+                        <span class="stat-value">${stat.value}</span>
+                    </div>
+                `).join('')}
+            `;
+            return card;
+        }
+
+        function updatePrompt() {
+            const enabledCards = Object.entries(state.cards)
+                .filter(([_, enabled]) => enabled)
+                .map(([key, _]) => {
+                    const names = { spending: 'Monthly Spending', savings: 'Savings Progress', portfolio: 'Investment Breakdown' };
+                    return names[key];
+                })
+                .join(', ');
+
+            const prompt = `
+Design a focused Net Worth dashboard with the following layout:
+
+PRIMARY SECTION:
+- Large hero card showing Net Worth value (large monospace font)
+- Percentage change this month in accent color
+- 12-month trend chart (line/area style)
+- Year-to-date change metric
+
+SUPPORTING CARDS (3-column grid below hero):
+${Object.entries(state.cards)
+    .filter(([_, enabled]) => enabled)
+    .map(([key, _]) => {
+        const names = {
+            spending: '1. Monthly Spending card with category breakdown',
+            savings: '2. Savings Progress card showing rate and target',
+            portfolio: '3. Investment Breakdown card with allocation'
+        };
+        return names[key];
+    })
+    .join('\n')}
+
+DESIGN REQUIREMENTS:
+- Clean, minimalist dark theme (background #1a1a1a to #252525)
+- Accent color: ${state.accentColor}
+- Large metric values in monospace (Courier New)
+- Hero card emphasized with larger padding and subtle border
+- Supporting cards in responsive 3-column grid
+- Trend chart style: ${state.chartStyle}
+- Secondary stats within cards (key-value pairs)
+- Header with "Mission Control" title and control icons
+- Smooth hover states on cards
+- Subtle separators between stat rows
+- Similar aesthetic to Sentinel 001 dashboard
+
+Focus: Net worth is the primary metric, with supporting financial metrics below for quick overview without overwhelming.
+`.trim();
+
+            document.getElementById('promptOutput').textContent = prompt;
+        }
+
+        document.getElementById('copyBtn').addEventListener('click', () => {
+            const prompt = document.getElementById('promptOutput').textContent;
+            navigator.clipboard.writeText(prompt).then(() => {
+                const btn = document.getElementById('copyBtn');
+                const original = btn.textContent;
+                btn.textContent = 'Copied!';
+                btn.classList.add('copied');
+                setTimeout(() => {
+                    btn.textContent = original;
+                    btn.classList.remove('copied');
+                }, 2000);
+            });
+        });
+
+        // Set initial theme
+        document.documentElement.style.setProperty('--accent-color', state.accentColor);
+        init();
+    </script>
+</body>
+</html>

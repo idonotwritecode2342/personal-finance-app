@@ -17,6 +17,26 @@
 
 **Do NOT proceed to the next feature until user has tested and approved current feature.**
 
+## Design System - Core Theme (Established)
+
+All UI development must adhere to this design system. See CLAUDE.md for full theme specifications.
+
+### Quick Reference for Developers
+- **Dark Theme**: `#1a1a1a` (bg) → `#252525` (elevated) → `#2d2d2d` (interactive)
+- **Accent**: `#22c55e` (green) for positive metrics and hover states
+- **Typography**: Courier New for metrics, system sans-serif for body
+- **Cards**: 32px padding, subtle borders, 24px gaps, hover glow effect
+- **Responsive**: 3-column grid (desktop) adapts to 1-column (mobile < 768px)
+- **Animations**: 0.3s ease transitions, staggered reveals on page load
+- **Hierarchy**: Large monospace metrics, uppercase labels, subtle separators
+
+**When building new features:**
+1. Reuse established colors (don't add new ones)
+2. Follow card component pattern (icon + title + metrics + separators)
+3. All numeric values in monospace font
+4. Test responsiveness on mobile
+5. Use CSS variables for theming consistency
+
 ## Feature Implementation Checklist
 
 ### Phase 1: Foundation & Database

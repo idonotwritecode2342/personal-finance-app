@@ -173,6 +173,65 @@ See `/docs/plans/2026-02-01-mvp-1-0-design.md` for full design document.
 
 ---
 
+## Design System & Theme
+
+### Color Palette
+- **Primary Background**: `#1a1a1a` (darkest)
+- **Secondary Background**: `#252525` (elevated surfaces)
+- **Tertiary Background**: `#2d2d2d` (interactive elements)
+- **Border Color**: `#3a3a3a` (subtle separators)
+- **Text Primary**: `#ffffff` (main text)
+- **Text Secondary**: `#b0b0b0` (labels, hints)
+- **Accent Color**: `#22c55e` (positive metrics, interactions)
+- **Accent Dark**: `#16a34a` (hover states)
+- **Positive**: `#22c55e` (gains, increases)
+- **Negative**: `#ef4444` (losses, decreases)
+
+### Typography
+- **Display Metrics**: `Courier New`, monospace (large, precision)
+- **Body**: `-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif` (clean, readable)
+- **Metric Values**: `font-size: 24-56px`, `font-weight: 700`, monospace
+- **Labels**: `font-size: 11-12px`, `text-transform: uppercase`, `letter-spacing: 1-2px`
+- **Card Titles**: `font-size: 14px`, `font-weight: 600`, uppercase
+
+### Card & Spacing System
+- **Hero Card Padding**: `48px` (emphasized, large breathing room)
+- **Supporting Card Padding**: `32px` (consistent with hierarchy)
+- **Grid Gap**: `24px` (comfortable spacing between cards)
+- **Border Radius**: `12px` (cards), `6px` (buttons, inputs)
+- **Border**: `1px solid #3a3a3a` (subtle, not intrusive)
+
+### Visual Effects
+- **Hover States**:
+  - Border color changes to `#22c55e`
+  - `box-shadow: 0 12px 32px rgba(34, 197, 94, 0.08)`
+  - Background shifts to tertiary
+- **Animations**:
+  - Fade-in: `0.6s ease-out`
+  - Staggered cards: `animation-delay` on grid items
+  - Smooth transitions: `0.3s ease` on all interactive elements
+- **Gradient Accents**:
+  - Radial gradient highlights on hero card: `rgba(34, 197, 94, 0.05)`
+  - Subtle top-border glow on card hover
+
+### Grid Layout
+- **Responsive**: `grid-template-columns: repeat(auto-fit, minmax(320px, 1fr))`
+- **Desktop**: 3 columns for supporting cards
+- **Mobile** (< 768px): 1 column, stacked layout
+- **Hero Section**: Full width, above grid
+
+### Data Hierarchy
+1. **Primary**: Net Worth (large hero card, dominant visual)
+2. **Secondary**: 12-month trend chart (large, contextual)
+3. **Supporting**: Monthly spending, savings, investments (equal weight, 3-column grid)
+4. **Tertiary**: Key metrics within cards (subtle separators, smaller text)
+
+### Aesthetic Direction
+- **Style**: Refined minimalism inspired by Sentinel 001 and Quantro dashboards
+- **Philosophy**: "Mission Control for Personal Finance" - data-first, uncluttered, clear hierarchy
+- **Tone**: Professional, precise, empowering
+- **Visual Character**: Dark, technical, with controlled accent color (green for positive)
+
 ## Testing Protocol
 
 **At the end of each feature implementation:**

@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Upload Bank Statement</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --bg-primary: #1a1a1a;
+      --bg-secondary: #252525;
+      --bg-tertiary: #2d2d2d;
+      --accent: #22c55e;
+      --text-primary: #ffffff;
+      --text-secondary: #b0b0b0;
+      --border: #3a3a3a;
+    }
+
+    body {
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      padding: 40px 20px;
+    }
+
+    .header {
+      max-width: 800px;
+      margin: 0 auto 40px;
+    }
+
+    .back-link {
+      color: var(--accent);
+      text-decoration: none;
+      font-size: 14px;
+      margin-bottom: 20px;
+      display: inline-block;
+    }
+
+    .back-link:hover {
+      text-decoration: underline;
+    }
+
+    h1 {
+      font-size: 28px;
+      margin-bottom: 10px;
+    }
+
+    .subtitle {
+      color: var(--text-secondary);
+      font-size: 14px;
+    }
+
+    .progress-bar {
+      max-width: 800px;
+      margin: 0 auto 40px;
+      background: var(--border);
+      height: 4px;
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      background: var(--accent);
+      height: 100%;
+      width: 20%;
+      transition: width 0.3s ease;
+    }
+
+    .step-indicator {
+      max-width: 800px;
+      margin: 0 auto 40px;
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .card {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 32px;
+      margin-bottom: 20px;
+    }
+
+    .card h2 {
+      font-size: 16px;
+      margin-bottom: 24px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-secondary);
+    }
+
+    .drag-drop-zone {
+      border: 2px dashed var(--border);
+      border-radius: 8px;
+      padding: 40px 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .drag-drop-zone:hover {
+      border-color: var(--accent);
+      background: rgba(34, 197, 94, 0.05);
+    }
+
+    .drag-drop-zone.drag-over {
+      border-color: var(--accent);
+      background: rgba(34, 197, 94, 0.1);
+    }
+
+    .drag-drop-icon {
+      font-size: 40px;
+      margin-bottom: 16px;
+    }
+
+    .drag-drop-text {
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+    }
+
+    .drag-drop-hint {
+      font-size: 12px;
+      color: var(--border);
+    }
+
+    #pdfInput {
+      display: none;
+    }
+
+    .file-info {
+      margin-top: 20px;
+      padding: 16px;
+      background: var(--bg-tertiary);
+      border-radius: 6px;
+      border-left: 3px solid var(--accent);
+    }
+
+    .file-name {
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .file-size {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-top: 4px;
+    }
+
+    .bank-detection {
+      margin-top: 24px;
+      padding: 16px;
+      background: var(--bg-tertiary);
+      border-radius: 6px;
+      border-top: 1px solid var(--border);
+    }
+
+    .bank-detected {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .bank-detected-label {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-secondary);
+    }
+
+    .bank-detected-value {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--accent);
+    }
+
+    .confidence {
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    .bank-selector {
+      margin-top: 16px;
+    }
+
+    .bank-selector label {
+      display: block;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+    }
+
+    .bank-selector select {
+      width: 100%;
+      padding: 10px 12px;
+      background: var(--bg-primary);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text-primary);
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    .bank-selector select:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    .button-group {
+      display: flex;
+      gap: 12px;
+      margin-top: 24px;
+      justify-content: flex-end;
+    }
+
+    .btn {
+      padding: 12px 24px;
+      border-radius: 6px;
+      border: none;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #000;
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      background: #16a34a;
+      box-shadow: 0 8px 16px rgba(34, 197, 94, 0.2);
+    }
+
+    .btn-primary:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .btn-secondary {
+      background: transparent;
+      color: var(--text-secondary);
+      border: 1px solid var(--border);
+    }
+
+    .btn-secondary:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .error {
+      color: #ef4444;
+      font-size: 14px;
+      margin-top: 12px;
+    }
+
+    .loading {
+      display: none;
+      text-align: center;
+      padding: 20px;
+    }
+
+    .spinner {
+      border: 3px solid var(--border);
+      border-top: 3px solid var(--accent);
+      border-radius: 50%;
+      width: 30px;
+      height: 30px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 10px;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    @media (max-width: 768px) {
+      .container {
+        padding: 0 16px;
+      }
+
+      .card {
+        padding: 24px;
+      }
+
+      .button-group {
+        flex-direction: column-reverse;
+      }
+
+      .btn {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <a href="/dashboard" class="back-link">← Back to Dashboard</a>
+    <h1>📤 Upload Bank Statement</h1>
+    <p class="subtitle">Import transactions from your bank</p>
+  </div>
+
+  <div class="progress-bar">
+    <div class="progress-fill" style="width: 20%;"></div>
+  </div>
+
+  <div class="step-indicator">
+    <span>1. Upload</span>
+    <span>2. Confirm Bank</span>
+    <span>3. Review</span>
+    <span>4. Categories</span>
+    <span>5. Confirm</span>
+  </div>
+
+  <div class="container">
+    <div class="card">
+      <h2>Step 1: Upload PDF</h2>
+
+      <form id="uploadForm" enctype="multipart/form-data">
+        <div class="drag-drop-zone" id="dragDropZone">
+          <div class="drag-drop-icon">📄</div>
+          <div class="drag-drop-text">Drop PDF here or click to browse</div>
+          <div class="drag-drop-hint">Supported: PDF files (max 5MB)</div>
+          <input type="file" id="pdfInput" accept=".pdf" name="pdf" />
+        </div>
+
+        <div id="fileInfo" class="file-info" style="display: none;">
+          <div class="file-name" id="fileName"></div>
+          <div class="file-size" id="fileSize"></div>
+        </div>
+
+        <div id="bankDetection" class="bank-detection" style="display: none;">
+          <div class="bank-detected">
+            <div>
+              <div class="bank-detected-label">Bank Detected</div>
+              <div class="bank-detected-value" id="bankDetectedValue">-</div>
+              <div class="confidence" id="confidence"></div>
+            </div>
+          </div>
+
+          <div class="bank-selector">
+            <label for="bankSelect">Confirm or Select Bank:</label>
+            <select id="bankSelect">
+              <option value="">Select a bank...</option>
+              <optgroup label="UK Banks">
+                <option value="HSBC">HSBC</option>
+                <option value="Revolut">Revolut</option>
+                <option value="AMEX">American Express (AMEX)</option>
+              </optgroup>
+              <optgroup label="India Banks">
+                <option value="ICICI">ICICI</option>
+                <option value="HSBC">HSBC India</option>
+              </optgroup>
+            </select>
+          </div>
+        </div>
+
+        <div class="loading" id="loading">
+          <div class="spinner"></div>
+          <p>Processing PDF...</p>
+        </div>
+
+        <div class="error" id="error"></div>
+
+        <div class="button-group">
+          <button type="button" class="btn btn-secondary" onclick="window.history.back()">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="submitBtn" disabled>Continue to Bank Confirmation</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const form = document.getElementById('uploadForm');
+    const dragDropZone = document.getElementById('dragDropZone');
+    const pdfInput = document.getElementById('pdfInput');
+    const fileInfo = document.getElementById('fileInfo');
+    const fileName = document.getElementById('fileName');
+    const fileSize = document.getElementById('fileSize');
+    const bankDetection = document.getElementById('bankDetection');
+    const bankDetectedValue = document.getElementById('bankDetectedValue');
+    const confidence = document.getElementById('confidence');
+    const bankSelect = document.getElementById('bankSelect');
+    const submitBtn = document.getElementById('submitBtn');
+    const error = document.getElementById('error');
+    const loading = document.getElementById('loading');
+
+    // Drag and drop
+    dragDropZone.addEventListener('click', () => pdfInput.click());
+
+    dragDropZone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dragDropZone.classList.add('drag-over');
+    });
+
+    dragDropZone.addEventListener('dragleave', () => {
+      dragDropZone.classList.remove('drag-over');
+    });
+
+    dragDropZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dragDropZone.classList.remove('drag-over');
+      const files = e.dataTransfer.files;
+      if (files.length > 0) {
+        pdfInput.files = files;
+        handleFileSelect();
+      }
+    });
+
+    pdfInput.addEventListener('change', handleFileSelect);
+
+    function handleFileSelect() {
+      const file = pdfInput.files[0];
+      if (!file) return;
+
+      // Show file info
+      fileInfo.style.display = 'block';
+      fileName.textContent = file.name;
+      fileSize.textContent = (file.size / 1024 / 1024).toFixed(2) + ' MB';
+
+      // Reset error
+      error.textContent = '';
+
+      // Enable submit
+      submitBtn.disabled = false;
+    }
+
+    // Form submission
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const file = pdfInput.files[0];
+      if (!file) {
+        error.textContent = 'Please select a PDF file';
+        return;
+      }
+
+      loading.style.display = 'block';
+      submitBtn.disabled = true;
+
+      const formData = new FormData();
+      formData.append('pdf', file);
+
+      try {
+        const response = await fetch('/ops/upload', {
+          method: 'POST',
+          body: formData
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || 'Upload failed');
+        }
+
+        // Show bank detection
+        if (data.bankDetection && data.bankDetection.bank) {
+          bankDetectedValue.textContent = data.bankDetection.bank;
+          confidence.textContent = 'Confidence: ' + (data.bankDetection.confidence * 100).toFixed(0) + '%';
+          bankSelect.value = data.bankDetection.bank;
+        }
+
+        bankDetection.style.display = 'block';
+        submitBtn.textContent = 'Confirm Bank & Continue';
+
+      } catch (err) {
+        error.textContent = err.message;
+      } finally {
+        loading.style.display = 'none';
+        submitBtn.disabled = false;
+      }
+    });
+
+    // Bank confirmation
+    bankSelect.addEventListener('change', () => {
+      submitBtn.disabled = bankSelect.value === '';
+    });
+
+    // Override form submit for bank confirmation
+    let isConfirmingBank = false;
+    const originalOnSubmit = form.onsubmit;
+
+    form.addEventListener('submit', async (e) => {
+      // Only intercept if we're on the bank confirmation step
+      if (bankDetection.style.display !== 'none' && bankSelect.value && !isConfirmingBank) {
+        e.preventDefault();
+        isConfirmingBank = true;
+
+        loading.style.display = 'block';
+        submitBtn.disabled = true;
+
+        try {
+          const response = await fetch('/ops/upload/confirm-bank', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ selectedBank: bankSelect.value })
+          });
+
+          const data = await response.json();
+
+          if (!response.ok) {
+            throw new Error(data.error || 'Confirmation failed');
+          }
+
+          // Redirect to Step 3
+          window.location.href = '/ops/preview';
+
+        } catch (err) {
+          error.textContent = err.message;
+        } finally {
+          loading.style.display = 'none';
+          submitBtn.disabled = false;
+          isConfirmingBank = false;
+        }
+      }
+    });
+  </script>
+</body>
+</html>

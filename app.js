@@ -9,6 +9,7 @@ const pool = require('./db/connection');
 
 const authRoutes = require('./routes/auth');
 const dashboardRoutes = require('./routes/dashboard');
+const opsRoutes = require('./routes/ops');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -52,6 +53,7 @@ const isAuthenticated = (req, res, next) => {
 // Routes
 app.use('/', authRoutes);
 app.use('/dashboard', isAuthenticated, dashboardRoutes);
+app.use('/ops', isAuthenticated, opsRoutes);
 
 // Redirect root to dashboard if logged in, else to login
 app.get('/', (req, res) => {

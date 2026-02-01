@@ -317,7 +317,7 @@
   </div>
 
   <div class="progress-bar">
-    <div class="progress-fill" style="width: 20%;"></div>
+    <div class="progress-fill" id="progressFill" style="width: 20%;"></div>
   </div>
 
   <div class="step-indicator">
@@ -345,35 +345,9 @@
           <div class="file-size" id="fileSize"></div>
         </div>
 
-        <div id="bankDetection" class="bank-detection" style="display: none;">
-          <div class="bank-detected">
-            <div>
-              <div class="bank-detected-label">Bank Detected</div>
-              <div class="bank-detected-value" id="bankDetectedValue">-</div>
-              <div class="confidence" id="confidence"></div>
-            </div>
-          </div>
-
-          <div class="bank-selector">
-            <label for="bankSelect">Confirm or Select Bank:</label>
-            <select id="bankSelect">
-              <option value="">Select a bank...</option>
-              <optgroup label="UK Banks">
-                <option value="HSBC">HSBC</option>
-                <option value="Revolut">Revolut</option>
-                <option value="AMEX">American Express (AMEX)</option>
-              </optgroup>
-              <optgroup label="India Banks">
-                <option value="ICICI">ICICI</option>
-                <option value="HSBC">HSBC India</option>
-              </optgroup>
-            </select>
-          </div>
-        </div>
-
-        <div class="loading" id="loading">
+        <div class="loading" id="loading1">
           <div class="spinner"></div>
-          <p>Processing PDF...</p>
+          <p id="loadingMessage">Processing PDF...</p>
         </div>
 
         <div class="error" id="error"></div>
@@ -384,6 +358,49 @@
         </div>
       </form>
     </div>
+
+    <!-- Step 2: Confirm Bank -->
+    <div class="card" id="step2Card" style="display: none;">
+      <h2>Step 2: Confirm Bank</h2>
+
+      <div class="bank-detection">
+        <div class="bank-detected">
+          <div>
+            <div class="bank-detected-label">Bank Detected</div>
+            <div class="bank-detected-value" id="bankDetectedValue">-</div>
+            <div class="confidence" id="confidence"></div>
+          </div>
+        </div>
+
+        <div class="bank-selector">
+          <label for="bankSelect">Confirm or Select Bank:</label>
+          <select id="bankSelect">
+            <option value="">Select a bank...</option>
+            <optgroup label="UK Banks">
+              <option value="HSBC">HSBC</option>
+              <option value="Revolut">Revolut</option>
+              <option value="AMEX">American Express (AMEX)</option>
+            </optgroup>
+            <optgroup label="India Banks">
+              <option value="ICICI">ICICI</option>
+              <option value="HSBC">HSBC India</option>
+            </optgroup>
+          </select>
+        </div>
+      </div>
+
+      <div class="loading" id="loading2">
+        <div class="spinner"></div>
+        <p id="loadingMessage2">Extracting transactions from statement...</p>
+      </div>
+
+      <div class="error" id="error2"></div>
+
+      <div class="button-group">
+        <button type="button" class="btn btn-secondary" onclick="window.history.back()">Back</button>
+        <button type="button" class="btn btn-primary" id="submitBtn2" disabled>Extract & Continue</button>
+      </div>
+    </div>
   </div>
 
   <script>
@@ -393,13 +410,20 @@
     const fileInfo = document.getElementById('fileInfo');
     const fileName = document.getElementById('fileName');
     const fileSize = document.getElementById('fileSize');
-    const bankDetection = document.getElementById('bankDetection');
     const bankDetectedValue = document.getElementById('bankDetectedValue');
     const confidence = document.getElementById('confidence');
     const bankSelect = document.getElementById('bankSelect');
     const submitBtn = document.getElementById('submitBtn');
+    const submitBtn2 = document.getElementById('submitBtn2');
     const error = document.getElementById('error');
-    const loading = document.getElementById('loading');
+    const error2 = document.getElementById('error2');
+    const loading1 = document.getElementById('loading1');
+    const loading2 = document.getElementById('loading2');
+    const loadingMessage = document.getElementById('loadingMessage');
+    const loadingMessage2 = document.getElementById('loadingMessage2');
+    const progressFill = document.getElementById('progressFill');
+    const step1Card = document.getElementById('step1Card');
+    const step2Card = document.getElementById('step2Card');
 
     // Drag and drop
     dragDropZone.addEventListener('click', () => pdfInput.click());
@@ -441,7 +465,7 @@
       submitBtn.disabled = false;
     }
 
-    // Form submission
+    // Step 1: PDF Upload submission
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
 
@@ -451,8 +475,9 @@
         return;
       }
 
-      loading.style.display = 'block';
+      loading1.style.display = 'block';
       submitBtn.disabled = true;
+      loadingMessage.textContent = 'Processing PDF...';
 
       const formData = new FormData();
       formData.append('pdf', file);
@@ -469,77 +494,80 @@
           throw new Error(data.error || 'Upload failed');
         }
 
-        // Show bank detection
+        // Show bank detection in Step 2
         if (data.bankDetection && data.bankDetection.bank) {
           bankDetectedValue.textContent = data.bankDetection.bank;
           confidence.textContent = 'Confidence: ' + (data.bankDetection.confidence * 100).toFixed(0) + '%';
           bankSelect.value = data.bankDetection.bank;
         }
 
-        bankDetection.style.display = 'block';
-        submitBtn.textContent = 'Confirm Bank & Continue';
+        // Move to Step 2
+        step1Card.style.display = 'none';
+        step2Card.style.display = 'block';
+        progressFill.style.width = '40%';
+        error.textContent = '';
 
       } catch (err) {
         error.textContent = err.message;
       } finally {
-        loading.style.display = 'none';
+        loading1.style.display = 'none';
         submitBtn.disabled = false;
       }
     });
 
-    // Bank confirmation
+    // Step 2: Bank confirmation
     bankSelect.addEventListener('change', () => {
-      submitBtn.disabled = bankSelect.value === '';
+      submitBtn2.disabled = bankSelect.value === '';
     });
 
-    // Override form submit for bank confirmation
-    let isConfirmingBank = false;
-    const originalOnSubmit = form.onsubmit;
+    submitBtn2.addEventListener('click', async (e) => {
+      e.preventDefault();
 
-    form.addEventListener('submit', async (e) => {
-      // Only intercept if we're on the bank confirmation step
-      if (bankDetection.style.display !== 'none' && bankSelect.value && !isConfirmingBank) {
-        e.preventDefault();
-        isConfirmingBank = true;
+      if (!bankSelect.value) {
+        error2.textContent = 'Please select a bank';
+        return;
+      }
 
-        loading.style.display = 'block';
-        submitBtn.disabled = true;
+      loading2.style.display = 'block';
+      submitBtn2.disabled = true;
+      loadingMessage2.textContent = 'Extracting transactions from statement...';
+      error2.textContent = '';
 
-        try {
-          const response = await fetch('/ops/upload/confirm-bank', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ selectedBank: bankSelect.value })
-          });
+      try {
+        // Confirm bank selection
+        const response = await fetch('/ops/upload/confirm-bank', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ selectedBank: bankSelect.value })
+        });
 
-          const data = await response.json();
+        const data = await response.json();
 
-          if (!response.ok) {
-            throw new Error(data.error || 'Confirmation failed');
-          }
-
-          // Extract transactions from LLM
-          const extractResponse = await fetch('/ops/upload/extract-transactions', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' }
-          });
-
-          const extractData = await extractResponse.json();
-
-          if (!extractResponse.ok) {
-            throw new Error(extractData.error || 'Transaction extraction failed');
-          }
-
-          // Redirect to Step 3
-          window.location.href = '/ops/preview';
-
-        } catch (err) {
-          error.textContent = err.message;
-        } finally {
-          loading.style.display = 'none';
-          submitBtn.disabled = false;
-          isConfirmingBank = false;
+        if (!response.ok) {
+          throw new Error(data.error || 'Confirmation failed');
         }
+
+        // Extract transactions from LLM
+        loadingMessage2.textContent = 'Extracting transactions from statement...';
+        const extractResponse = await fetch('/ops/upload/extract-transactions', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' }
+        });
+
+        const extractData = await extractResponse.json();
+
+        if (!extractResponse.ok) {
+          throw new Error(extractData.error || 'Transaction extraction failed');
+        }
+
+        // Redirect to Step 3
+        window.location.href = '/ops/preview';
+
+      } catch (err) {
+        error2.textContent = err.message;
+      } finally {
+        loading2.style.display = 'none';
+        submitBtn2.disabled = false;
       }
     });
   </script>

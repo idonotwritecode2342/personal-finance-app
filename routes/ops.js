@@ -56,6 +56,7 @@ router.post('/upload', upload.single('pdf'), async (req, res) => {
       statementText,
       bankDetection,
       userId: req.session.userId,
+      country: 'UK', // Default to UK, can be overridden in bank confirmation
       step: 2 // Move to Step 2: Bank Confirmation
     };
 
@@ -238,6 +239,11 @@ router.post('/upload/confirm', async (req, res) => {
 
     const { userId, extractedTransactions, bank, country } = req.session.uploadState;
 
+    // Validate country exists
+    if (!country) {
+      return res.status(400).json({ error: 'Country not specified' });
+    }
+
     // Create or get bank account
     let bankAccountId;
     const bankResult = await pool.query(
@@ -254,12 +260,20 @@ router.post('/upload/confirm', async (req, res) => {
         [country]
       );
 
+      if (!countryResult.rows[0]) {
+        return res.status(400).json({ error: 'Country not found' });
+      }
+
       const newBankResult = await pool.query(
         `INSERT INTO bank_accounts (user_id, country_id, bank_name, account_type, currency, confirmed)
          VALUES ($1, $2, $3, $4, $5, true)
          RETURNING id`,
         [userId, countryResult.rows[0].id, bank, 'checking', country === 'UK' ? 'GBP' : 'INR']
       );
+
+      if (!newBankResult.rows[0]) {
+        return res.status(500).json({ error: 'Failed to create bank account' });
+      }
 
       bankAccountId = newBankResult.rows[0].id;
     }

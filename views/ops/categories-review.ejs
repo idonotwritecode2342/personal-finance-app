@@ -199,7 +199,7 @@
       loading.style.display = 'block';
 
       const categorizedTransactions = Array.from(selects).map(select => ({
-        category_id: select.value || null
+        category_id: select.value ? parseInt(select.value) : null
       }));
 
       try {

@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
+  <!-- Background with theme color -->
+  <rect width="32" height="32" fill="#22c55e" rx="6"/>
+  
+  <!-- Dollar sign -->
+  <g fill="none" stroke="#ffffff" stroke-width="3" stroke-linecap="round">
+    <!-- Top curve -->
+    <path d="M 12 12 Q 12 8 16 8 L 20 8 Q 24 8 24 12"/>
+    <!-- Bottom curve -->
+    <path d="M 20 24 Q 20 28 16 28 L 12 28 Q 8 28 8 24"/>
+    <!-- Vertical line -->
+    <line x1="16" y1="6" x2="16" y2="30" stroke-width="2.5"/>
+  </g>
+</svg>

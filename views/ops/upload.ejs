@@ -373,7 +373,7 @@
         </div>
 
         <div class="bank-selector">
-          <label for="bankSelect">Confirm or Select Bank:</label>
+          <label for="bankSelect">Confirm or Select Bank Account:</label>
           <select id="bankSelect">
             <option value="">Select a bank...</option>
           </select>
@@ -416,38 +416,69 @@
     const step1Card = document.getElementById('step1Card');
     const step2Card = document.getElementById('step2Card');
 
-    let institutionsMap = {}; // Store institutions for lookup
+    let bankLookup = {}; // Store bank accounts for lookup by name
 
-    // Fetch and populate banks on page load
+    // Fetch and populate user's bank accounts on page load
     async function populateBanks() {
       try {
-        const response = await fetch('/ops/institutions');
-        const institutionsByCountry = await response.json();
+        const response = await fetch('/ops/upload/banks');
+        const banksByCountry = await response.json();
+
+        bankLookup = {};
 
         // Clear existing options (keep default)
         while (bankSelect.options.length > 1) {
           bankSelect.remove(1);
         }
 
-        // Add optgroups for each country with its banks
-        Object.entries(institutionsByCountry).forEach(([countryCode, countryData]) => {
+        let totalBanks = 0;
+
+        Object.entries(banksByCountry).forEach(([countryCode, countryData]) => {
           const optgroup = document.createElement('optgroup');
           optgroup.label = countryData.country;
 
           countryData.banks.forEach(bank => {
+            totalBanks += 1;
             const option = document.createElement('option');
-            option.value = bank.id;
-            option.textContent = bank.name;
+            option.value = bank.id; // bank account id
+            const labelParts = [
+              bank.account_name || bank.bank_name,
+              bank.bank_name && bank.account_name ? `(${bank.bank_name})` : null,
+              bank.account_type ? bank.account_type.toUpperCase() : null,
+              bank.account_number_masked ? bank.account_number_masked : null
+            ].filter(Boolean);
+            option.textContent = labelParts.join(' • ');
             optgroup.appendChild(option);
 
-            // Store for lookup by name
-            institutionsMap[bank.name.toLowerCase()] = bank.id;
+            // Store lookups by different possible names
+            const names = [
+              bank.bank_name,
+              bank.institution_name,
+              bank.account_name
+            ].filter(Boolean);
+            names.forEach(name => {
+              const key = name.toLowerCase();
+              if (!bankLookup[key]) bankLookup[key] = bank.id;
+            });
           });
 
           bankSelect.appendChild(optgroup);
         });
+
+        if (totalBanks === 0) {
+          const option = document.createElement('option');
+          option.value = '';
+          option.disabled = true;
+          option.textContent = 'No linked bank accounts. Add one in Ops → Banks.';
+          bankSelect.appendChild(option);
+          error2.textContent = 'No active bank accounts found. Add one in Ops → Banks, then return.';
+          submitBtn2.disabled = true;
+        } else {
+          error2.textContent = '';
+        }
       } catch (err) {
         console.error('Failed to load banks:', err);
+        error2.textContent = 'Unable to load your bank accounts.';
       }
     }
 
@@ -528,8 +559,15 @@
           bankDetectedValue.textContent = data.bankDetection.bank;
           confidence.textContent = 'Confidence: ' + (data.bankDetection.confidence * 100).toFixed(0) + '%';
 
-          // Try to match detected bank to institution ID
-          const detectedBankId = institutionsMap[data.bankDetection.bank.toLowerCase()];
+          // Try to match detected bank to an existing linked account
+          const detectedKey = data.bankDetection.bank.toLowerCase();
+          let detectedBankId = bankLookup[detectedKey];
+          if (!detectedBankId) {
+            // Fuzzy contains match
+            const match = Object.keys(bankLookup).find(key => key.includes(detectedKey) || detectedKey.includes(key));
+            detectedBankId = match ? bankLookup[match] : null;
+          }
+
           if (detectedBankId) {
             bankSelect.value = detectedBankId;
             // Enable button since bank is already selected
@@ -570,11 +608,11 @@
       error2.textContent = '';
 
       try {
-        // Confirm bank selection
+        // Confirm bank selection (bank account id)
         const response = await fetch('/ops/upload/confirm-bank', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ institutionId: parseInt(bankSelect.value) })
+          body: JSON.stringify({ bankAccountId: parseInt(bankSelect.value) })
         });
 
         const data = await response.json();

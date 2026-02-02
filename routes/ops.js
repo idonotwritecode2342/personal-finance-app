@@ -4,7 +4,11 @@ const path = require('path');
 const fs = require('fs');
 const { extractTextFromPDF } = require('../lib/pdf-extractor');
 const { detectBank } = require('../lib/bank-detector');
-const { assignCategoriesToTransactions } = require('../lib/llm-extractor');
+const { extractTransactionsFromText, assignCategoriesToTransactions } = require('../lib/llm-extractor');
+const pool = require('../db/connection');
+const { insertTransactions } = require('../db/transactions');
+const { getModel, setModel } = require('../lib/ai/model-config');
+const axios = require('axios');
 
 const router = express.Router();
 
@@ -72,43 +76,52 @@ router.post('/upload', upload.single('pdf'), async (req, res) => {
   }
 });
 
-// POST /ops/upload/confirm-bank - Confirm bank selection
+// POST /ops/upload/confirm-bank - Confirm selected bank account
 router.post('/upload/confirm-bank', async (req, res) => {
   try {
-    const { institutionId } = req.body;
-
-    console.log('Bank confirmation - institutionId:', institutionId);
-    console.log('Session uploadState exists:', !!req.session.uploadState);
+    const { bankAccountId } = req.body;
 
     if (!req.session.uploadState) {
       return res.status(400).json({ error: 'No upload in progress' });
     }
 
-    // Fetch institution details to get bank name and country
-    const institutionResult = await pool.query(`
-      SELECT i.id, i.name as bank_name, c.code as country_code, c.name as country_name
-      FROM institutions i
-      JOIN countries c ON i.country_id = c.id
-      WHERE i.id = $1
-    `, [institutionId]);
-
-    console.log('Institution query result:', institutionResult.rows);
-
-    if (!institutionResult.rows[0]) {
-      console.error('Institution not found for ID:', institutionId);
-      return res.status(400).json({ error: 'Invalid institution selected' });
+    if (!bankAccountId) {
+      return res.status(400).json({ error: 'Bank account is required' });
     }
 
-    const institution = institutionResult.rows[0];
+    // Ensure the bank account belongs to the current user
+    const accountResult = await pool.query(
+      `SELECT 
+        ba.id,
+        ba.account_name,
+        ba.bank_name,
+        ba.account_type,
+        ba.currency,
+        ba.institution_id,
+        c.id as country_id,
+        c.code as country_code,
+        c.name as country_name,
+        c.currency_code,
+        i.name as institution_name
+       FROM bank_accounts ba
+       JOIN countries c ON ba.country_id = c.id
+       LEFT JOIN institutions i ON ba.institution_id = i.id
+       WHERE ba.id = $1 AND ba.user_id = $2 AND COALESCE(ba.is_active, true) = true`,
+      [bankAccountId, req.session.userId]
+    );
 
-    console.log('Setting institution:', institution);
+    if (!accountResult.rows[0]) {
+      return res.status(400).json({ error: 'Invalid bank account selected' });
+    }
 
-    req.session.uploadState.institutionId = parseInt(institutionId);
-    req.session.uploadState.bank = institution.bank_name;
-    req.session.uploadState.country = institution.country_code;
+    const account = accountResult.rows[0];
+
+    req.session.uploadState.bankAccountId = parseInt(bankAccountId);
+    req.session.uploadState.institutionId = account.institution_id;
+    req.session.uploadState.bank = account.institution_name || account.bank_name;
+    req.session.uploadState.country = account.country_code;
+    req.session.uploadState.currency = account.currency || account.currency_code;
     req.session.uploadState.step = 3; // Move to Step 3: Transaction Preview
-
-    console.log('Session uploadState after confirmation:', req.session.uploadState);
 
     res.json({ success: true, step: 3 });
   } catch (err) {
@@ -125,12 +138,6 @@ router.get('/upload', (req, res) => {
     currentStep: req.session.uploadState?.step || 1
   });
 });
-
-const { extractTransactionsFromText } = require('../lib/llm-extractor');
-const { insertTransactions } = require('../db/transactions');
-const pool = require('../db/connection');
-const { getModel, setModel } = require('../lib/ai/model-config');
-const axios = require('axios');
 
 function buildFeedback(query) {
   if (!query.status || !query.message) {
@@ -215,7 +222,7 @@ router.post('/settings/model', async (req, res) => {
   }
 });
 
-// GET /ops/institutions - Get banks grouped by country
+// GET /ops/institutions - Get institutions grouped by country (legacy for other screens)
 router.get('/institutions', async (req, res) => {
   try {
     const result = await pool.query(`
@@ -232,7 +239,6 @@ router.get('/institutions', async (req, res) => {
       ORDER BY c.name, i.name
     `);
 
-    // Group by country
     const institutionsByCountry = {};
     result.rows.forEach(row => {
       if (!institutionsByCountry[row.country_code]) {
@@ -251,6 +257,59 @@ router.get('/institutions', async (req, res) => {
     res.json(institutionsByCountry);
   } catch (err) {
     console.error('Institutions fetch error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /ops/upload/banks - Get user bank accounts grouped by country
+router.get('/upload/banks', async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT
+        ba.id,
+        ba.account_name,
+        ba.bank_name,
+        ba.account_type,
+        ba.account_number_masked,
+        ba.currency,
+        ba.institution_id,
+        c.code as country_code,
+        c.name as country_name,
+        c.currency_code,
+        i.name as institution_name
+       FROM bank_accounts ba
+       JOIN countries c ON ba.country_id = c.id
+       LEFT JOIN institutions i ON ba.institution_id = i.id
+       WHERE ba.user_id = $1 AND COALESCE(ba.is_active, true) = true
+       ORDER BY c.name, i.name NULLS LAST, ba.account_name`,
+      [req.session.userId]
+    );
+
+    const banksByCountry = {};
+    result.rows.forEach(row => {
+      if (!banksByCountry[row.country_code]) {
+        banksByCountry[row.country_code] = {
+          country: row.country_name,
+          currency: row.currency_code,
+          banks: []
+        };
+      }
+
+      banksByCountry[row.country_code].banks.push({
+        id: row.id, // bank account id
+        account_name: row.account_name,
+        bank_name: row.bank_name,
+        account_type: row.account_type,
+        account_number_masked: row.account_number_masked,
+        currency: row.currency,
+        institution_id: row.institution_id,
+        institution_name: row.institution_name
+      });
+    });
+
+    res.json(banksByCountry);
+  } catch (err) {
+    console.error('Upload banks fetch error:', err);
     res.status(500).json({ error: err.message });
   }
 });
@@ -359,56 +418,33 @@ router.post('/upload/confirm', async (req, res) => {
       return res.status(400).json({ error: 'No upload in progress' });
     }
 
-    const { userId, extractedTransactions, bank, country, institutionId } = req.session.uploadState;
+    const { userId, extractedTransactions, bank, bankAccountId } = req.session.uploadState;
 
-    // Validate country and institution
-    if (!country) {
-      return res.status(400).json({ error: 'Country not specified. Please select a bank first.' });
+    if (!bankAccountId) {
+      return res.status(400).json({ error: 'Bank account not specified. Please select a bank.' });
     }
 
-    if (!institutionId) {
-      return res.status(400).json({ error: 'Institution not specified. Please select a bank.' });
-    }
-
-    // Get institution and country info
-    const institutionResult = await pool.query(
-      `SELECT i.id, i.name, c.id as country_id, c.code as country_code, c.currency_code
-       FROM institutions i
-       JOIN countries c ON i.country_id = c.id
-       WHERE i.id = $1`,
-      [institutionId]
+    // Validate bank account belongs to user and fetch currency/country
+    const accountResult = await pool.query(
+      `SELECT 
+        ba.id,
+        ba.currency,
+        ba.country_id,
+        ba.institution_id,
+        c.code as country_code,
+        c.currency_code
+       FROM bank_accounts ba
+       JOIN countries c ON ba.country_id = c.id
+       WHERE ba.id = $1 AND ba.user_id = $2`,
+      [bankAccountId, userId]
     );
 
-    if (!institutionResult.rows[0]) {
-      return res.status(400).json({ error: 'Institution not found' });
+    if (!accountResult.rows[0]) {
+      return res.status(400).json({ error: 'Selected bank account not found' });
     }
 
-    const institution = institutionResult.rows[0];
-
-    // Create or get bank account
-    let bankAccountId;
-    const bankResult = await pool.query(
-      `SELECT id FROM bank_accounts
-       WHERE user_id = $1 AND institution_id = $2`,
-      [userId, institutionId]
-    );
-
-    if (bankResult.rows.length > 0) {
-      bankAccountId = bankResult.rows[0].id;
-    } else {
-      const newBankResult = await pool.query(
-        `INSERT INTO bank_accounts (user_id, country_id, institution_id, bank_name, account_type, currency, confirmed)
-         VALUES ($1, $2, $3, $4, $5, $6, true)
-         RETURNING id`,
-        [userId, institution.country_id, institutionId, institution.name, 'checking', institution.currency_code]
-      );
-
-      if (!newBankResult.rows[0]) {
-        return res.status(500).json({ error: 'Failed to create bank account' });
-      }
-
-      bankAccountId = newBankResult.rows[0].id;
-    }
+    const account = accountResult.rows[0];
+    const currencyCode = account.currency || account.currency_code || (account.country_code === 'UK' ? 'GBP' : 'INR');
 
     // Merge categorized data with extracted transactions
     const transactionsToSave = extractedTransactions.map((tx, idx) => {
@@ -416,7 +452,7 @@ router.post('/upload/confirm', async (req, res) => {
       return {
         ...tx,
         category_id: categorizedTx?.category_id || null,
-        currency: country === 'UK' ? 'GBP' : 'INR'
+        currency: currencyCode
       };
     });
 

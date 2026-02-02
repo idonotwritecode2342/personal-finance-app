@@ -100,8 +100,18 @@ router.get('/upload', (req, res) => {
 });
 
 const { extractTransactionsFromText } = require('../lib/llm-extractor');
-const { insertTransactions, getCategoryByName } = require('../db/transactions');
+const { insertTransactions } = require('../db/transactions');
 const pool = require('../db/connection');
+
+function buildFeedback(query) {
+  if (!query.status || !query.message) {
+    return null;
+  }
+  return {
+    status: query.status,
+    message: query.message
+  };
+}
 
 // POST /ops/upload/extract-transactions - Extract from LLM
 router.post('/upload/extract-transactions', async (req, res) => {
@@ -275,7 +285,8 @@ router.get('/categories', async (req, res) => {
       title: 'Categories',
       subtitle: 'Manage transaction categories',
       currentPage: 'categories',
-      categories: categories.rows
+      categories: categories.rows,
+      feedback: buildFeedback(req.query)
     });
   } catch (err) {
     console.error('Categories error:', err);
@@ -283,11 +294,75 @@ router.get('/categories', async (req, res) => {
   }
 });
 
+// POST /ops/categories - Create custom category
+router.post('/categories', async (req, res) => {
+  try {
+    const name = req.body.name?.trim();
+    const description = req.body.description?.trim() || null;
+
+    if (!name) {
+      return res.redirect('/ops/categories?status=error&message=Category%20name%20is%20required');
+    }
+
+    await pool.query(
+      `INSERT INTO transaction_categories (name, description, system_defined)
+       VALUES ($1, $2, false)`,
+      [name, description]
+    );
+
+    return res.redirect('/ops/categories?status=success&message=Category%20created');
+  } catch (err) {
+    if (err.code === '23505') {
+      return res.redirect('/ops/categories?status=error&message=Category%20already%20exists');
+    }
+    console.error('Create category error:', err);
+    return res.redirect('/ops/categories?status=error&message=Failed%20to%20create%20category');
+  }
+});
+
+// POST /ops/categories/:id/delete - Delete custom category
+router.post('/categories/:id/delete', async (req, res) => {
+  try {
+    const categoryId = Number(req.params.id);
+    if (!Number.isInteger(categoryId)) {
+      return res.redirect('/ops/categories?status=error&message=Invalid%20category');
+    }
+
+    const categoryResult = await pool.query(
+      'SELECT id, system_defined FROM transaction_categories WHERE id = $1',
+      [categoryId]
+    );
+
+    if (categoryResult.rows.length === 0) {
+      return res.redirect('/ops/categories?status=error&message=Category%20not%20found');
+    }
+
+    if (categoryResult.rows[0].system_defined) {
+      return res.redirect('/ops/categories?status=error&message=System%20categories%20cannot%20be%20deleted');
+    }
+
+    const usageResult = await pool.query(
+      'SELECT COUNT(*)::int AS count FROM transactions WHERE category_id = $1',
+      [categoryId]
+    );
+
+    if (usageResult.rows[0].count > 0) {
+      return res.redirect('/ops/categories?status=error&message=Category%20is%20in%20use');
+    }
+
+    await pool.query('DELETE FROM transaction_categories WHERE id = $1', [categoryId]);
+    return res.redirect('/ops/categories?status=success&message=Category%20deleted');
+  } catch (err) {
+    console.error('Delete category error:', err);
+    return res.redirect('/ops/categories?status=error&message=Failed%20to%20delete%20category');
+  }
+});
+
 // GET /ops/banks - Bank account management page
 router.get('/banks', async (req, res) => {
   try {
     const accounts = await pool.query(
-      `SELECT ba.id, ba.bank_name, ba.account_type, ba.currency, ba.confirmed, c.name as country
+      `SELECT ba.id, ba.bank_name, ba.account_type, ba.account_number_masked, ba.currency, ba.confirmed, c.name as country
        FROM bank_accounts ba
        JOIN countries c ON ba.country_id = c.id
        WHERE ba.user_id = $1
@@ -295,15 +370,144 @@ router.get('/banks', async (req, res) => {
       [req.session.userId]
     );
 
+    const countries = await pool.query(
+      'SELECT id, code, name, currency_code FROM countries ORDER BY name ASC'
+    );
+
     res.render('ops/banks', {
       title: 'Bank Accounts',
       subtitle: 'Manage your linked bank accounts',
       currentPage: 'banks',
-      accounts: accounts.rows
+      accounts: accounts.rows,
+      countries: countries.rows,
+      feedback: buildFeedback(req.query)
     });
   } catch (err) {
     console.error('Banks error:', err);
     res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /ops/banks - Create manual bank account
+router.post('/banks', async (req, res) => {
+  try {
+    const bankName = req.body.bank_name?.trim();
+    const accountType = req.body.account_type;
+    const countryCode = req.body.country_code;
+    const accountNumberMasked = req.body.account_number_masked?.trim() || null;
+    const confirmed = req.body.confirmed === 'on';
+
+    if (!bankName || !countryCode) {
+      return res.redirect('/ops/banks?status=error&message=Bank%20name%20and%20country%20are%20required');
+    }
+
+    const validAccountTypes = ['checking', 'savings', 'investment'];
+    if (!validAccountTypes.includes(accountType)) {
+      return res.redirect('/ops/banks?status=error&message=Invalid%20account%20type');
+    }
+
+    const countryResult = await pool.query(
+      'SELECT id, currency_code FROM countries WHERE code = $1',
+      [countryCode]
+    );
+
+    if (countryResult.rows.length === 0) {
+      return res.redirect('/ops/banks?status=error&message=Invalid%20country');
+    }
+
+    await pool.query(
+      `INSERT INTO bank_accounts
+      (user_id, country_id, bank_name, account_type, account_number_masked, currency, confirmed)
+      VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+      [
+        req.session.userId,
+        countryResult.rows[0].id,
+        bankName,
+        accountType,
+        accountNumberMasked,
+        countryResult.rows[0].currency_code,
+        confirmed
+      ]
+    );
+
+    return res.redirect('/ops/banks?status=success&message=Bank%20account%20added');
+  } catch (err) {
+    console.error('Create bank account error:', err);
+    return res.redirect('/ops/banks?status=error&message=Failed%20to%20add%20bank%20account');
+  }
+});
+
+// POST /ops/banks/:id/update - Update existing bank account
+router.post('/banks/:id/update', async (req, res) => {
+  try {
+    const bankAccountId = Number(req.params.id);
+    const bankName = req.body.bank_name?.trim();
+    const accountType = req.body.account_type;
+    const accountNumberMasked = req.body.account_number_masked?.trim() || null;
+    const confirmed = req.body.confirmed === 'on';
+
+    if (!Number.isInteger(bankAccountId)) {
+      return res.redirect('/ops/banks?status=error&message=Invalid%20bank%20account');
+    }
+
+    if (!bankName) {
+      return res.redirect('/ops/banks?status=error&message=Bank%20name%20is%20required');
+    }
+
+    const validAccountTypes = ['checking', 'savings', 'investment'];
+    if (!validAccountTypes.includes(accountType)) {
+      return res.redirect('/ops/banks?status=error&message=Invalid%20account%20type');
+    }
+
+    const accountResult = await pool.query(
+      'SELECT id FROM bank_accounts WHERE id = $1 AND user_id = $2',
+      [bankAccountId, req.session.userId]
+    );
+
+    if (accountResult.rows.length === 0) {
+      return res.redirect('/ops/banks?status=error&message=Bank%20account%20not%20found');
+    }
+
+    await pool.query(
+      `UPDATE bank_accounts
+       SET bank_name = $1, account_type = $2, account_number_masked = $3, confirmed = $4, updated_at = CURRENT_TIMESTAMP
+       WHERE id = $5`,
+      [bankName, accountType, accountNumberMasked, confirmed, bankAccountId]
+    );
+
+    return res.redirect('/ops/banks?status=success&message=Bank%20account%20updated');
+  } catch (err) {
+    console.error('Update bank account error:', err);
+    return res.redirect('/ops/banks?status=error&message=Failed%20to%20update%20bank%20account');
+  }
+});
+
+// POST /ops/banks/:id/delete - Delete bank account
+router.post('/banks/:id/delete', async (req, res) => {
+  try {
+    const bankAccountId = Number(req.params.id);
+    if (!Number.isInteger(bankAccountId)) {
+      return res.redirect('/ops/banks?status=error&message=Invalid%20bank%20account');
+    }
+
+    const usageResult = await pool.query(
+      'SELECT COUNT(*)::int AS count FROM transactions WHERE bank_account_id = $1 AND user_id = $2',
+      [bankAccountId, req.session.userId]
+    );
+
+    if (usageResult.rows[0].count > 0) {
+      return res.redirect('/ops/banks?status=error&message=Cannot%20delete%20account%20with%20transactions');
+    }
+
+    await pool.query(
+      'DELETE FROM bank_accounts WHERE id = $1 AND user_id = $2',
+      [bankAccountId, req.session.userId]
+    );
+
+    return res.redirect('/ops/banks?status=success&message=Bank%20account%20deleted');
+  } catch (err) {
+    console.error('Delete bank account error:', err);
+    return res.redirect('/ops/banks?status=error&message=Failed%20to%20delete%20bank%20account');
   }
 });
 

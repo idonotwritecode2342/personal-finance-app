@@ -1,36 +1,386 @@
-<h2>Linked Bank Accounts</h2>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Banks - Ops</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --bg-primary: #1a1a1a;
+      --bg-secondary: #252525;
+      --bg-tertiary: #2d2d2d;
+      --accent: #22c55e;
+      --accent-dark: #16a34a;
+      --text-primary: #ffffff;
+      --text-secondary: #b0b0b0;
+      --border: #3a3a3a;
+      --negative: #ef4444;
+    }
+    body {
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      min-height: 100vh;
+    }
+    .container { max-width: 1240px; margin: 0 auto; padding: 32px 24px 48px; }
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+    .title-wrap h1 { font-size: 28px; margin-bottom: 6px; }
+    .subtitle {
+      color: var(--text-secondary);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .dashboard-link {
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+      text-decoration: none;
+      padding: 10px 14px;
+      border-radius: 6px;
+      transition: all 0.3s ease;
+      font-size: 13px;
+    }
+    .dashboard-link:hover { border-color: var(--accent); color: var(--accent); }
+    .ops-tabs {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 24px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+    }
+    .ops-tab {
+      text-decoration: none;
+      color: var(--text-secondary);
+      border: 1px solid var(--border);
+      background: var(--bg-secondary);
+      padding: 10px 16px;
+      border-radius: 6px;
+      font-size: 13px;
+      white-space: nowrap;
+      transition: all 0.3s ease;
+    }
+    .ops-tab:hover { border-color: var(--accent); color: var(--accent); }
+    .ops-tab.active {
+      border-color: var(--accent);
+      background: var(--bg-tertiary);
+      color: var(--accent);
+    }
+    .alert {
+      margin-bottom: 24px;
+      border-radius: 8px;
+      padding: 12px 14px;
+      font-size: 13px;
+      border: 1px solid var(--border);
+      background: var(--bg-secondary);
+    }
+    .alert.success {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+    .alert.error {
+      border-color: var(--negative);
+      color: var(--negative);
+    }
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 24px;
+      margin-bottom: 24px;
+    }
+    .card {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 32px;
+      transition: all 0.3s ease;
+    }
+    .card:hover {
+      border-color: var(--accent);
+      box-shadow: 0 12px 32px rgba(34, 197, 94, 0.08);
+    }
+    .card-title {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-secondary);
+      margin-bottom: 12px;
+    }
+    .metric {
+      font-family: 'Courier New', monospace;
+      font-size: 34px;
+      font-weight: 700;
+    }
+    .metric-label {
+      color: var(--text-secondary);
+      font-size: 13px;
+    }
+    .section-card {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 32px;
+      margin-bottom: 24px;
+    }
+    .section-title {
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-secondary);
+      margin-bottom: 18px;
+    }
+    .create-grid {
+      display: grid;
+      grid-template-columns: 1.5fr 1fr 1fr 1fr auto;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    .create-foot {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: var(--text-secondary);
+      font-size: 12px;
+    }
+    input, select, button {
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      font-size: 14px;
+    }
+    input, select {
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+      padding: 10px 12px;
+    }
+    input:focus, select:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+    .btn-primary {
+      background: var(--accent);
+      color: #000;
+      border: none;
+      padding: 10px 16px;
+      cursor: pointer;
+      font-weight: 700;
+    }
+    .btn-primary:hover { background: var(--accent-dark); }
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; min-width: 980px; }
+    th, td { padding: 10px; border-bottom: 1px solid var(--border); text-align: left; }
+    th {
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      font-size: 11px;
+      color: var(--text-secondary);
+      background: var(--bg-tertiary);
+    }
+    tbody tr:hover { background: var(--bg-tertiary); }
+    .row-form { display: contents; }
+    .currency {
+      font-family: 'Courier New', monospace;
+      font-weight: 700;
+    }
+    .status-pill {
+      font-size: 11px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      display: inline-block;
+      border: 1px solid transparent;
+    }
+    .status-pill.active {
+      background: rgba(34, 197, 94, 0.15);
+      color: var(--accent);
+      border-color: var(--accent);
+    }
+    .status-pill.pending {
+      color: var(--text-secondary);
+      border-color: var(--border);
+    }
+    .actions {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+    .btn-secondary {
+      background: transparent;
+      color: var(--text-secondary);
+      border: 1px solid var(--border);
+      padding: 8px 10px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+    .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+    .btn-delete {
+      background: transparent;
+      border: 1px solid var(--negative);
+      color: var(--negative);
+      padding: 8px 10px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+    .btn-delete:hover { background: rgba(239, 68, 68, 0.12); }
+    .checkbox-wrap { display: flex; align-items: center; gap: 8px; }
+    .empty {
+      border: 1px dashed var(--border);
+      border-radius: 8px;
+      padding: 24px;
+      color: var(--text-secondary);
+      text-align: center;
+      font-size: 13px;
+    }
+    .empty a { color: var(--accent); text-decoration: none; }
+    @media (max-width: 768px) {
+      .container { padding: 20px 16px 32px; }
+      .topbar { flex-direction: column; align-items: flex-start; }
+      .section-card, .card { padding: 24px; }
+      .create-grid { grid-template-columns: 1fr; }
+      .btn-primary { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <%
+    const activeAccounts = accounts.filter(a => a.confirmed).length;
+    const pendingAccounts = accounts.length - activeAccounts;
+  %>
+  <div class="container">
+    <div class="topbar">
+      <div class="title-wrap">
+        <h1>🏦 Bank Ops</h1>
+        <p class="subtitle">Create, update, and review linked bank accounts</p>
+      </div>
+      <a class="dashboard-link" href="/dashboard">← Back to Dashboard</a>
+    </div>
 
-<div style="margin-top: 40px;">
-  <% if (accounts.length === 0) { %>
-    <p style="color: var(--text-secondary); text-align: center; padding: 40px;">
-      No bank accounts linked yet. <a href="/ops/upload" style="color: var(--accent); text-decoration: none;">Upload a statement</a> to add one.
-    </p>
-  <% } else { %>
-    <table style="width: 100%; border-collapse: collapse;">
-      <thead style="background: var(--bg-tertiary);">
-        <tr>
-          <th style="padding: 12px; text-align: left; font-weight: 600; color: var(--text-secondary); font-size: 12px;">Bank</th>
-          <th style="padding: 12px; text-align: left; font-weight: 600; color: var(--text-secondary); font-size: 12px;">Type</th>
-          <th style="padding: 12px; text-align: left; font-weight: 600; color: var(--text-secondary); font-size: 12px;">Country</th>
-          <th style="padding: 12px; text-align: left; font-weight: 600; color: var(--text-secondary); font-size: 12px;">Currency</th>
-          <th style="padding: 12px; text-align: center; font-weight: 600; color: var(--text-secondary); font-size: 12px;">Status</th>
-        </tr>
-      </thead>
-      <tbody>
-        <% accounts.forEach(account => { %>
-        <tr style="border-bottom: 1px solid var(--border);">
-          <td style="padding: 12px;"><%= account.bank_name %></td>
-          <td style="padding: 12px; text-transform: capitalize;"><%= account.account_type %></td>
-          <td style="padding: 12px;"><%= account.country %></td>
-          <td style="padding: 12px; font-family: 'Courier New', monospace;"><%= account.currency %></td>
-          <td style="padding: 12px; text-align: center;">
-            <span style="display: inline-block; padding: 4px 8px; background: var(--accent); color: #000; border-radius: 4px; font-size: 12px; font-weight: 600;">
-              <%= account.confirmed ? 'Active' : 'Pending' %>
-            </span>
-          </td>
-        </tr>
-        <% }); %>
-      </tbody>
-    </table>
-  <% } %>
-</div>
+    <div class="ops-tabs">
+      <a class="ops-tab" href="/ops/upload">📤 Upload</a>
+      <a class="ops-tab" href="/ops/categories">🏷️ Categories</a>
+      <a class="ops-tab active" href="/ops/banks">🏦 Banks</a>
+    </div>
+
+    <% if (feedback) { %>
+      <div class="alert <%= feedback.status === 'success' ? 'success' : 'error' %>">
+        <%= feedback.message %>
+      </div>
+    <% } %>
+
+    <div class="stats-grid">
+      <div class="card">
+        <div class="card-title">Total Accounts</div>
+        <div class="metric"><%= accounts.length %></div>
+        <div class="metric-label">Across all countries</div>
+      </div>
+      <div class="card">
+        <div class="card-title">Active Accounts</div>
+        <div class="metric"><%= activeAccounts %></div>
+        <div class="metric-label">Confirmed and ready</div>
+      </div>
+      <div class="card">
+        <div class="card-title">Pending Accounts</div>
+        <div class="metric"><%= pendingAccounts %></div>
+        <div class="metric-label">Need confirmation</div>
+      </div>
+    </div>
+
+    <div class="section-card">
+      <h2 class="section-title">Add Manual Bank Account</h2>
+      <form action="/ops/banks" method="POST">
+        <div class="create-grid">
+          <input type="text" name="bank_name" placeholder="Bank name (e.g., Barclays)" maxlength="100" required>
+          <select name="account_type" required>
+            <option value="checking">Checking</option>
+            <option value="savings">Savings</option>
+            <option value="investment">Investment</option>
+          </select>
+          <select name="country_code" required>
+            <% countries.forEach(country => { %>
+              <option value="<%= country.code %>"><%= country.name %> (<%= country.code %>)</option>
+            <% }); %>
+          </select>
+          <input type="text" name="account_number_masked" placeholder="Masked account (optional)" maxlength="20">
+          <button class="btn-primary" type="submit">Add Account</button>
+        </div>
+        <label class="create-foot">
+          <input type="checkbox" name="confirmed" checked>
+          Mark this account as confirmed
+        </label>
+      </form>
+    </div>
+
+    <div class="section-card">
+      <h2 class="section-title">Linked Accounts</h2>
+      <% if (accounts.length === 0) { %>
+        <div class="empty">
+          No accounts yet. Add one above, or import via <a href="/ops/upload">PDF upload</a>.
+        </div>
+      <% } else { %>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Bank Name</th>
+                <th>Type</th>
+                <th>Account #</th>
+                <th>Country</th>
+                <th>Currency</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% accounts.forEach(account => { %>
+                <tr>
+                  <% const formId = `account-${account.id}`; %>
+                  <td>
+                    <input type="text" name="bank_name" value="<%= account.bank_name %>" maxlength="100" required form="<%= formId %>">
+                  </td>
+                  <td>
+                    <select name="account_type" form="<%= formId %>">
+                      <option value="checking" <%= account.account_type === 'checking' ? 'selected' : '' %>>Checking</option>
+                      <option value="savings" <%= account.account_type === 'savings' ? 'selected' : '' %>>Savings</option>
+                      <option value="investment" <%= account.account_type === 'investment' ? 'selected' : '' %>>Investment</option>
+                    </select>
+                  </td>
+                  <td>
+                    <input type="text" name="account_number_masked" value="<%= account.account_number_masked || '' %>" maxlength="20" placeholder="Optional" form="<%= formId %>">
+                  </td>
+                  <td><%= account.country %></td>
+                  <td class="currency"><%= account.currency %></td>
+                  <td>
+                    <label class="checkbox-wrap">
+                      <input type="checkbox" name="confirmed" <%= account.confirmed ? 'checked' : '' %> form="<%= formId %>">
+                      <span class="status-pill <%= account.confirmed ? 'active' : 'pending' %>"><%= account.confirmed ? 'Active' : 'Pending' %></span>
+                    </label>
+                  </td>
+                  <td class="actions">
+                    <form id="<%= formId %>" class="row-form" action="/ops/banks/<%= account.id %>/update" method="POST">
+                      <button class="btn-secondary" type="submit">Save</button>
+                      <button
+                        class="btn-delete"
+                        type="submit"
+                        formaction="/ops/banks/<%= account.id %>/delete"
+                        onclick="return confirm('Delete this bank account?');"
+                      >Delete</button>
+                    </form>
+                  </td>
+                </tr>
+              <% }); %>
+            </tbody>
+          </table>
+        </div>
+      <% } %>
+    </div>
+  </div>
+</body>
+</html>

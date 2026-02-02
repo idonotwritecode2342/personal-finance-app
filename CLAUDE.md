@@ -13,15 +13,13 @@ A comprehensive personal finance platform designed as a "mission control system"
 The application will eventually capture and optimize every aspect of financial position:
 
 ### Asset Tracking
-- Cash accounts and balances
-- Stock portfolio tracking
-- ETF holdings and performance
-- Dividend tracking and reinvestment
-- Pension contributions and growth
-- Cryptocurrency holdings
-- Property and mortgage management
-- Managed funds
-- Physical assets and valuables
+- **Bank Accounts**: Multiple accounts per institution (checking, savings, credit_card, NRO, NRE, FD)
+- **Investments**: Stocks, ETFs, mutual funds, pensions — user provides initial + current value
+- **Institutions**: Banks and brokers with country association (HSBC UK ≠ HSBC India, Zerodha, Vanguard)
+- **Goals**: Savings targets, investment targets, net worth milestones with deadline tracking
+- **Real-time Balances**: Auto-calculated on transaction changes + daily snapshots
+- Property and mortgage management (future phase)
+- Cryptocurrency holdings (future phase)
 
 ### Intelligence & Automation
 - **Live price tracking** for stocks, ETFs, and crypto with real-time portfolio valuation
@@ -166,10 +164,108 @@ See `/docs/plans/2026-02-01-mvp-1-0-design.md` for full design document.
 - User can override categories
 
 ### Category System
-- Starts with 13 seeded categories
-- User can add custom categories
-- LLM learns and suggests for future uploads
-- System will evolve as more transactions added
+- Starts with 13 seeded categories (with icons and colors)
+- User can add custom categories (linked to `user_id`)
+- LLM learns from user overrides via `transaction_category_history`
+- Category hierarchy supported via `parent_id`
+
+---
+
+## Database Schema Overview
+
+The database is organized into 9 domains with 22 tables. All schema is managed via versioned migrations in `/db/migrations/`.
+
+### Domain 1: Identity & Geo
+- **`users`** - Auth + preferences (`display_name`, `default_country_code`)
+- **`countries`** - UK, India with currency codes
+- **`currencies`** - GBP, INR, USD, EUR with symbols
+- **`currency_exchange_rates`** - FX rates with source tracking
+
+### Domain 2: Institutions & Accounts
+- **`institutions`** - Banks and brokers by country (HSBC UK, HSBC India, ICICI, Zerodha, Vanguard, etc.)
+  - Includes `detection_patterns` JSONB for PDF auto-detection
+  - `institution_type`: bank, broker, pension, crypto_exchange, other
+- **`bank_accounts`** (renamed conceptually to "accounts") - User accounts at institutions
+  - Supports all types: checking, savings, credit_card, nro, nre, fd, brokerage, isa, sipp, pension, crypto
+  - Links to `institution_id` for structured bank reference
+  - `account_name` for user-defined labels
+
+### Domain 3: Account Balances
+- **`account_balances`** - Real-time + daily snapshots
+  - Trigger auto-updates balance on transaction insert/update/delete
+  - `source`: calculated, manual, statement, snapshot
+  - Supports historical balance charts
+
+### Domain 4: Transactions & Categories
+- **`transactions`** - Finalized transaction ledger
+  - Links to `account_id`, `pdf_upload_id`, `extracted_txn_id`
+  - `is_excluded` flag for filtering from reports
+- **`transaction_categories`** - System + user custom categories
+  - `user_id` (NULL = system category)
+  - `parent_id` for hierarchy
+  - `icon`, `color`, `is_income`, `is_active`, `display_order`
+- **`transaction_category_history`** - Audit trail for AI learning
+  - Records all category changes with `source` (llm_initial, user_override)
+  - Used in LLM prompt to learn from user corrections
+
+### Domain 5: PDF Upload Pipeline
+- **`pdf_uploads`** - Upload metadata and LLM response
+  - `detected_institution_id`, `detection_confidence`
+  - `llm_model`, `llm_raw_response` JSONB, `error_message`
+- **`extracted_transactions`** - Staging table for review before import
+  - `status`: pending, approved, skipped, modified
+  - `suggested_category_id`, `suggestion_confidence`
+  - `user_category_id` for overrides
+
+### Domain 6: Investments
+- **`investments`** - User investments with manual valuations
+  - Links to `institution_id` (Zerodha, Vanguard, etc.)
+  - `investment_type`: stock, etf, mutual_fund, pension, property, crypto, fd, bond
+  - `initial_value`, `current_value`, `last_valued_at` (user-provided)
+- **`investment_valuations`** - Value history for charts
+
+### Domain 7: Goals
+- **`goals`** - Savings/investment targets with deadlines
+  - `goal_type`: savings, investment, debt_payoff, net_worth, custom
+  - `target_amount`, `current_amount`, `target_date`
+- **`goal_links`** - Connect goals to accounts/investments for progress tracking
+
+### Domain 8: Analytics & Snapshots
+- **`monthly_snapshots`** - Net worth and spend/income by month
+- **`budgets`** - Category budgets per month/country
+
+### Domain 9: AI Chat
+- **`ai_conversations`** - Chat sessions with page context
+- **`ai_messages`** - Message history with tool usage metadata
+
+### Key Relationships
+```
+users ─┬─> bank_accounts ─> transactions ─> transaction_categories
+       │        │                 │
+       │        └─> account_balances
+       │                          └─> transaction_category_history
+       │
+       ├─> pdf_uploads ─> extracted_transactions
+       │
+       ├─> investments ─> investment_valuations
+       │
+       ├─> goals ─> goal_links ─┬─> bank_accounts
+       │                        └─> investments
+       │
+       └─> ai_conversations ─> ai_messages
+
+institutions ─┬─> bank_accounts
+              └─> investments
+```
+
+### Running Migrations
+```bash
+# Run all pending migrations
+node scripts/migrate.js
+
+# Run legacy schema.sql (backwards compatibility)
+node scripts/migrate.js --legacy
+```
 
 ---
 

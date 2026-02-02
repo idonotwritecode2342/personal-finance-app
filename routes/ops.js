@@ -73,16 +73,31 @@ router.post('/upload', upload.single('pdf'), async (req, res) => {
 });
 
 // POST /ops/upload/confirm-bank - Confirm bank selection
-router.post('/upload/confirm-bank', (req, res) => {
+router.post('/upload/confirm-bank', async (req, res) => {
   try {
-    const { selectedBank, selectedCountry } = req.body;
+    const { institutionId } = req.body;
 
     if (!req.session.uploadState) {
       return res.status(400).json({ error: 'No upload in progress' });
     }
 
-    req.session.uploadState.bank = selectedBank;
-    req.session.uploadState.country = selectedCountry;
+    // Fetch institution details to get bank name and country
+    const institutionResult = await pool.query(`
+      SELECT i.id, i.name as bank_name, c.code as country_code, c.name as country_name
+      FROM institutions i
+      JOIN countries c ON i.country_id = c.id
+      WHERE i.id = $1
+    `, [institutionId]);
+
+    if (!institutionResult.rows[0]) {
+      return res.status(400).json({ error: 'Invalid institution selected' });
+    }
+
+    const institution = institutionResult.rows[0];
+
+    req.session.uploadState.institutionId = parseInt(institutionId);
+    req.session.uploadState.bank = institution.bank_name;
+    req.session.uploadState.country = institution.country_code;
     req.session.uploadState.step = 3; // Move to Step 3: Transaction Preview
 
     res.json({ success: true, step: 3 });
@@ -135,6 +150,46 @@ router.get('/', async (req, res) => {
     });
   } catch (err) {
     console.error('Ops home error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /ops/institutions - Get banks grouped by country
+router.get('/institutions', async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT
+        i.id,
+        i.name,
+        i.institution_type,
+        c.code as country_code,
+        c.name as country_name,
+        c.currency_code
+      FROM institutions i
+      JOIN countries c ON i.country_id = c.id
+      WHERE i.is_active = true AND i.institution_type = 'bank'
+      ORDER BY c.name, i.name
+    `);
+
+    // Group by country
+    const institutionsByCountry = {};
+    result.rows.forEach(row => {
+      if (!institutionsByCountry[row.country_code]) {
+        institutionsByCountry[row.country_code] = {
+          country: row.country_name,
+          currency: row.currency_code,
+          banks: []
+        };
+      }
+      institutionsByCountry[row.country_code].banks.push({
+        id: row.id,
+        name: row.name
+      });
+    });
+
+    res.json(institutionsByCountry);
+  } catch (err) {
+    console.error('Institutions fetch error:', err);
     res.status(500).json({ error: err.message });
   }
 });
@@ -243,38 +298,48 @@ router.post('/upload/confirm', async (req, res) => {
       return res.status(400).json({ error: 'No upload in progress' });
     }
 
-    const { userId, extractedTransactions, bank, country } = req.session.uploadState;
+    const { userId, extractedTransactions, bank, country, institutionId } = req.session.uploadState;
 
-    // Validate country exists
+    // Validate country and institution
     if (!country) {
-      return res.status(400).json({ error: 'Country not specified' });
+      return res.status(400).json({ error: 'Country not specified. Please select a bank first.' });
     }
+
+    if (!institutionId) {
+      return res.status(400).json({ error: 'Institution not specified. Please select a bank.' });
+    }
+
+    // Get institution and country info
+    const institutionResult = await pool.query(
+      `SELECT i.id, i.name, c.id as country_id, c.code as country_code, c.currency_code
+       FROM institutions i
+       JOIN countries c ON i.country_id = c.id
+       WHERE i.id = $1`,
+      [institutionId]
+    );
+
+    if (!institutionResult.rows[0]) {
+      return res.status(400).json({ error: 'Institution not found' });
+    }
+
+    const institution = institutionResult.rows[0];
 
     // Create or get bank account
     let bankAccountId;
     const bankResult = await pool.query(
       `SELECT id FROM bank_accounts
-       WHERE user_id = $1 AND LOWER(bank_name) = LOWER($2) AND country_id = (SELECT id FROM countries WHERE code = $3)`,
-      [userId, bank, country]
+       WHERE user_id = $1 AND institution_id = $2`,
+      [userId, institutionId]
     );
 
     if (bankResult.rows.length > 0) {
       bankAccountId = bankResult.rows[0].id;
     } else {
-      const countryResult = await pool.query(
-        'SELECT id FROM countries WHERE code = $1',
-        [country]
-      );
-
-      if (!countryResult.rows[0]) {
-        return res.status(400).json({ error: 'Country not found' });
-      }
-
       const newBankResult = await pool.query(
-        `INSERT INTO bank_accounts (user_id, country_id, bank_name, account_type, currency, confirmed)
-         VALUES ($1, $2, $3, $4, $5, true)
+        `INSERT INTO bank_accounts (user_id, country_id, institution_id, bank_name, account_type, currency, confirmed)
+         VALUES ($1, $2, $3, $4, $5, $6, true)
          RETURNING id`,
-        [userId, countryResult.rows[0].id, bank, 'checking', country === 'UK' ? 'GBP' : 'INR']
+        [userId, institution.country_id, institutionId, institution.name, 'checking', institution.currency_code]
       );
 
       if (!newBankResult.rows[0]) {

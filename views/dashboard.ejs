@@ -75,6 +75,36 @@
       align-items: center;
     }
 
+    .header-nav {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .menu-link {
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 13px;
+      padding: 8px 12px;
+      transition: all 0.2s ease;
+      background: var(--bg-tertiary);
+    }
+
+    .menu-link:hover {
+      background: var(--bg-primary);
+      color: var(--accent);
+      border-color: var(--accent);
+    }
+
+    .menu-link.active {
+      color: var(--accent);
+      border-color: var(--accent);
+      background: var(--bg-primary);
+    }
+
     .control-btn {
       width: 40px;
       height: 40px;
@@ -526,9 +556,10 @@
         align-items: flex-start;
       }
 
-      .header-controls {
+    .header-controls {
         width: 100%;
-        justify-content: space-between;
+        justify-content: flex-start;
+        flex-wrap: wrap;
       }
     }
 
@@ -556,8 +587,15 @@
         <option value="UK">🇬🇧 United Kingdom (GBP)</option>
         <option value="IN">🇮🇳 India (INR)</option>
       </select>
-      <button class="control-btn" title="Settings">⚙️</button>
-      <button class="control-btn" title="Menu">⋮</button>
+      <div class="header-nav">
+        <a href="/dashboard" class="menu-link active">Dashboard</a>
+        <a href="/analytics" class="menu-link">Analytics</a>
+        <a href="/agent" class="menu-link">Agent</a>
+        <a href="/investments" class="menu-link">Investments</a>
+        <a href="/goals" class="menu-link">Goals</a>
+      </div>
+      <a href="/ops" class="control-btn" title="Ops">⚙️</a>
+      <a href="/logout" class="menu-link">Logout</a>
     </div>
   </div>
 
@@ -865,10 +903,6 @@
       console.log('Selected country:', e.target.value);
     });
 
-    // Settings button (gear icon)
-    document.querySelector('button[title="Settings"]').addEventListener('click', function() {
-      window.location.href = '/ops';
-    });
   </script>
 </body>
 </html>

@@ -376,15 +376,6 @@
           <label for="bankSelect">Confirm or Select Bank:</label>
           <select id="bankSelect">
             <option value="">Select a bank...</option>
-            <optgroup label="UK Banks">
-              <option value="HSBC">HSBC</option>
-              <option value="Revolut">Revolut</option>
-              <option value="AMEX">American Express (AMEX)</option>
-            </optgroup>
-            <optgroup label="India Banks">
-              <option value="ICICI">ICICI</option>
-              <option value="HSBC">HSBC India</option>
-            </optgroup>
           </select>
         </div>
       </div>
@@ -424,6 +415,44 @@
     const progressFill = document.getElementById('progressFill');
     const step1Card = document.getElementById('step1Card');
     const step2Card = document.getElementById('step2Card');
+
+    let institutionsMap = {}; // Store institutions for lookup
+
+    // Fetch and populate banks on page load
+    async function populateBanks() {
+      try {
+        const response = await fetch('/ops/institutions');
+        const institutionsByCountry = await response.json();
+
+        // Clear existing options (keep default)
+        while (bankSelect.options.length > 1) {
+          bankSelect.remove(1);
+        }
+
+        // Add optgroups for each country with its banks
+        Object.entries(institutionsByCountry).forEach(([countryCode, countryData]) => {
+          const optgroup = document.createElement('optgroup');
+          optgroup.label = countryData.country;
+
+          countryData.banks.forEach(bank => {
+            const option = document.createElement('option');
+            option.value = bank.id;
+            option.textContent = bank.name;
+            optgroup.appendChild(option);
+
+            // Store for lookup by name
+            institutionsMap[bank.name.toLowerCase()] = bank.id;
+          });
+
+          bankSelect.appendChild(optgroup);
+        });
+      } catch (err) {
+        console.error('Failed to load banks:', err);
+      }
+    }
+
+    // Load banks when page loads
+    populateBanks();
 
     // Drag and drop
     dragDropZone.addEventListener('click', () => pdfInput.click());
@@ -498,9 +527,14 @@
         if (data.bankDetection && data.bankDetection.bank) {
           bankDetectedValue.textContent = data.bankDetection.bank;
           confidence.textContent = 'Confidence: ' + (data.bankDetection.confidence * 100).toFixed(0) + '%';
-          bankSelect.value = data.bankDetection.bank;
-          // Enable button since bank is already selected
-          submitBtn2.disabled = false;
+
+          // Try to match detected bank to institution ID
+          const detectedBankId = institutionsMap[data.bankDetection.bank.toLowerCase()];
+          if (detectedBankId) {
+            bankSelect.value = detectedBankId;
+            // Enable button since bank is already selected
+            submitBtn2.disabled = false;
+          }
         }
 
         // Move to Step 2
@@ -540,7 +574,7 @@
         const response = await fetch('/ops/upload/confirm-bank', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ selectedBank: bankSelect.value })
+          body: JSON.stringify({ institutionId: parseInt(bankSelect.value) })
         });
 
         const data = await response.json();

@@ -11,7 +11,6 @@
       --bg-secondary: #252525;
       --bg-tertiary: #2d2d2d;
       --accent: #22c55e;
-      --accent-dark: #16a34a;
       --text-primary: #ffffff;
       --text-secondary: #b0b0b0;
       --border: #3a3a3a;
@@ -22,29 +21,22 @@
       color: var(--text-primary);
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     }
-    .container {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 40px 24px 56px;
-    }
+    .container { max-width: 1240px; margin: 0 auto; padding: 32px 24px 48px; }
     .topbar {
       display: flex;
       justify-content: space-between;
       align-items: center;
       gap: 12px;
-      margin-bottom: 28px;
+      margin-bottom: 24px;
     }
-    .title {
-      font-size: 30px;
-      margin-bottom: 6px;
-    }
+    .title { font-size: 28px; margin-bottom: 6px; }
     .subtitle {
       color: var(--text-secondary);
       font-size: 12px;
       text-transform: uppercase;
       letter-spacing: 1px;
     }
-    .back-link {
+    .dashboard-link {
       border: 1px solid var(--border);
       color: var(--text-secondary);
       text-decoration: none;
@@ -53,88 +45,90 @@
       transition: all 0.3s ease;
       font-size: 13px;
     }
-    .back-link:hover {
+    .dashboard-link:hover { border-color: var(--accent); color: var(--accent); }
+    .ops-tabs {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 24px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+    }
+    .ops-tab {
+      text-decoration: none;
+      color: var(--text-secondary);
+      border: 1px solid var(--border);
+      background: var(--bg-secondary);
+      padding: 10px 16px;
+      border-radius: 6px;
+      font-size: 13px;
+      white-space: nowrap;
+      transition: all 0.3s ease;
+    }
+    .ops-tab:hover { border-color: var(--accent); color: var(--accent); }
+    .ops-tab.active {
       border-color: var(--accent);
+      background: var(--bg-tertiary);
       color: var(--accent);
     }
-    .stats-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-      gap: 24px;
-      margin-bottom: 24px;
-    }
-    .card {
+    .panel {
       background: var(--bg-secondary);
       border: 1px solid var(--border);
       border-radius: 12px;
       padding: 32px;
-      transition: all 0.3s ease;
+      margin-bottom: 24px;
     }
-    .card:hover {
-      border-color: var(--accent);
-      box-shadow: 0 12px 32px rgba(34, 197, 94, 0.08);
-    }
-    .card-label {
-      font-size: 12px;
-      color: var(--text-secondary);
+    .panel h2 {
+      font-size: 14px;
       text-transform: uppercase;
       letter-spacing: 1px;
-      margin-bottom: 12px;
+      color: var(--text-secondary);
+      margin-bottom: 20px;
+    }
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 24px;
+    }
+    .card {
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 20px;
+      transition: all 0.3s ease;
+    }
+    .card:hover { border-color: var(--accent); }
+    .card-label {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
     }
     .card-value {
       font-family: 'Courier New', monospace;
-      font-size: 36px;
+      font-size: 32px;
       font-weight: 700;
     }
-    .nav-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-      gap: 24px;
-    }
-    .nav-card {
-      background: linear-gradient(145deg, var(--bg-secondary), var(--bg-tertiary));
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 32px;
-      text-decoration: none;
-      color: inherit;
-      transition: all 0.3s ease;
-      min-height: 210px;
+    .quick-links {
       display: flex;
-      flex-direction: column;
-      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
     }
-    .nav-card:hover {
-      border-color: var(--accent);
-      transform: translateY(-2px);
-      box-shadow: 0 14px 30px rgba(34, 197, 94, 0.1);
-    }
-    .nav-icon {
-      font-size: 26px;
-      margin-bottom: 14px;
-    }
-    .nav-title {
-      font-size: 18px;
-      font-weight: 600;
-      margin-bottom: 8px;
-    }
-    .nav-copy {
+    .quick-link {
+      text-decoration: none;
       color: var(--text-secondary);
-      font-size: 14px;
-      line-height: 1.5;
-      margin-bottom: 18px;
-    }
-    .nav-cta {
-      color: var(--accent);
+      border: 1px solid var(--border);
+      background: var(--bg-tertiary);
+      padding: 10px 14px;
+      border-radius: 6px;
       font-size: 13px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.8px;
+      transition: all 0.3s ease;
     }
+    .quick-link:hover { border-color: var(--accent); color: var(--accent); }
     @media (max-width: 768px) {
-      .container { padding: 24px 16px 36px; }
+      .container { padding: 20px 16px 32px; }
       .topbar { flex-direction: column; align-items: flex-start; }
-      .card, .nav-card { padding: 24px; }
+      .panel { padding: 24px; }
     }
   </style>
 </head>
@@ -142,50 +136,40 @@
   <div class="container">
     <div class="topbar">
       <div>
-        <h1 class="title">⚙️ Ops Center</h1>
-        <p class="subtitle">Choose where you want to manage your finance system</p>
+        <h1 class="title">🧭 Ops Home</h1>
+        <p class="subtitle">Simple operations dashboard</p>
       </div>
-      <a href="/dashboard" class="back-link">← Back to Dashboard</a>
+      <a href="/dashboard" class="dashboard-link">← Back to Dashboard</a>
     </div>
 
-    <div class="stats-grid">
-      <div class="card">
-        <div class="card-label">Categories Available</div>
-        <div class="card-value"><%= totalCategories %></div>
-      </div>
-      <div class="card">
-        <div class="card-label">Linked Bank Accounts</div>
-        <div class="card-value"><%= totalAccounts %></div>
+    <div class="ops-tabs">
+      <a class="ops-tab active" href="/ops">🧭 Ops Home</a>
+      <a class="ops-tab" href="/ops/upload">📤 Upload</a>
+      <a class="ops-tab" href="/ops/categories">🏷️ Categories</a>
+      <a class="ops-tab" href="/ops/banks">🏦 Banks</a>
+    </div>
+
+    <div class="panel">
+      <h2>Snapshot</h2>
+      <div class="stats-grid">
+        <div class="card">
+          <div class="card-label">Categories</div>
+          <div class="card-value"><%= totalCategories %></div>
+        </div>
+        <div class="card">
+          <div class="card-label">Bank Accounts</div>
+          <div class="card-value"><%= totalAccounts %></div>
+        </div>
       </div>
     </div>
 
-    <div class="nav-grid">
-      <a href="/ops/upload" class="nav-card">
-        <div>
-          <div class="nav-icon">📤</div>
-          <h2 class="nav-title">Upload Statements</h2>
-          <p class="nav-copy">Upload bank PDFs, run extraction, and review transactions before import.</p>
-        </div>
-        <div class="nav-cta">Open Upload →</div>
-      </a>
-
-      <a href="/ops/categories" class="nav-card">
-        <div>
-          <div class="nav-icon">🏷️</div>
-          <h2 class="nav-title">Manage Categories</h2>
-          <p class="nav-copy">Create and maintain custom categories while keeping system defaults intact.</p>
-        </div>
-        <div class="nav-cta">Open Categories →</div>
-      </a>
-
-      <a href="/ops/banks" class="nav-card">
-        <div>
-          <div class="nav-icon">🏦</div>
-          <h2 class="nav-title">Manage Banks</h2>
-          <p class="nav-copy">Add manual accounts, update names/types, and keep account status clean.</p>
-        </div>
-        <div class="nav-cta">Open Banks →</div>
-      </a>
+    <div class="panel">
+      <h2>Quick Links</h2>
+      <div class="quick-links">
+        <a href="/ops/upload" class="quick-link">Go to Upload</a>
+        <a href="/ops/categories" class="quick-link">Go to Categories</a>
+        <a href="/ops/banks" class="quick-link">Go to Banks</a>
+      </div>
     </div>
   </div>
 </body>

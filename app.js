@@ -14,6 +14,9 @@ const opsRoutes = require('./routes/ops');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Trust Railway's proxy for secure cookies
+app.set('trust proxy', 1);
+
 // Middleware
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
@@ -30,6 +33,7 @@ app.use(session({
   cookie: {
     secure: process.env.NODE_ENV === 'production',
     httpOnly: true,
+    sameSite: 'lax',
     maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
   }
 }));

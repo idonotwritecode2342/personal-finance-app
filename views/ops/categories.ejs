@@ -1,323 +1,56 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Categories - Ops</title>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    :root {
-      --bg-primary: #1a1a1a;
-      --bg-secondary: #252525;
-      --bg-tertiary: #2d2d2d;
-      --accent: #22c55e;
-      --accent-dark: #16a34a;
-      --text-primary: #ffffff;
-      --text-secondary: #b0b0b0;
-      --border: #3a3a3a;
-      --negative: #ef4444;
-    }
-    body {
-      background: var(--bg-primary);
-      color: var(--text-primary);
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      min-height: 100vh;
-    }
-    .container { max-width: 1200px; margin: 0 auto; padding: 32px 24px 48px; }
-    .topbar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 12px;
-      margin-bottom: 24px;
-    }
-    .title-wrap h1 { font-size: 28px; margin-bottom: 6px; }
-    .subtitle {
-      color: var(--text-secondary);
-      font-size: 12px;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-    }
-    .dashboard-link {
-      border: 1px solid var(--border);
-      color: var(--text-secondary);
-      text-decoration: none;
-      padding: 10px 14px;
-      border-radius: 6px;
-      transition: all 0.3s ease;
-      font-size: 13px;
-    }
-    .dashboard-link:hover { border-color: var(--accent); color: var(--accent); }
-    .ops-tabs {
-      display: flex;
-      gap: 10px;
-      margin-bottom: 24px;
-      overflow-x: auto;
-      padding-bottom: 4px;
-    }
-    .ops-tab {
-      text-decoration: none;
-      color: var(--text-secondary);
-      border: 1px solid var(--border);
-      background: var(--bg-secondary);
-      padding: 10px 16px;
-      border-radius: 6px;
-      font-size: 13px;
-      white-space: nowrap;
-      transition: all 0.3s ease;
-    }
-    .ops-tab:hover { border-color: var(--accent); color: var(--accent); }
-    .ops-tab.active {
-      border-color: var(--accent);
-      background: var(--bg-tertiary);
-      color: var(--accent);
-    }
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-      gap: 24px;
-      margin-bottom: 24px;
-    }
-    .card {
-      background: var(--bg-secondary);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 32px;
-      transition: all 0.3s ease;
-    }
-    .card:hover {
-      border-color: var(--accent);
-      box-shadow: 0 12px 32px rgba(34, 197, 94, 0.08);
-    }
-    .card-title {
-      font-size: 12px;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      color: var(--text-secondary);
-      margin-bottom: 14px;
-    }
-    .metric {
-      font-family: 'Courier New', monospace;
-      font-size: 36px;
-      font-weight: 700;
-      margin-bottom: 4px;
-    }
-    .metric-label {
-      color: var(--text-secondary);
-      font-size: 13px;
-    }
-    .alert {
-      margin-bottom: 24px;
-      border-radius: 8px;
-      padding: 12px 14px;
-      font-size: 13px;
-      border: 1px solid var(--border);
-      background: var(--bg-secondary);
-    }
-    .alert.success {
-      border-color: var(--accent);
-      color: var(--accent);
-    }
-    .alert.error {
-      border-color: var(--negative);
-      color: var(--negative);
-    }
-    .form-grid {
-      display: grid;
-      grid-template-columns: 1fr 2fr auto;
-      gap: 12px;
-      align-items: center;
-    }
-    input, button {
-      border-radius: 6px;
-      border: 1px solid var(--border);
-      font-size: 14px;
-    }
-    input {
-      background: var(--bg-tertiary);
-      color: var(--text-primary);
-      padding: 11px 12px;
-    }
-    input:focus {
-      outline: none;
-      border-color: var(--accent);
-    }
-    .btn-primary {
-      background: var(--accent);
-      color: #000;
-      border: none;
-      padding: 11px 18px;
-      font-weight: 700;
-      cursor: pointer;
-      transition: all 0.3s ease;
-    }
-    .btn-primary:hover { background: var(--accent-dark); }
-    .section-card {
-      background: var(--bg-secondary);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 32px;
-    }
-    .section-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 18px;
-      gap: 12px;
-    }
-    .section-title {
-      font-size: 14px;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      color: var(--text-secondary);
-    }
-    .table-wrap { overflow-x: auto; }
-    table { width: 100%; border-collapse: collapse; font-size: 14px; }
-    th, td { padding: 12px; border-bottom: 1px solid var(--border); text-align: left; }
-    th {
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      font-size: 11px;
-      color: var(--text-secondary);
-      background: var(--bg-tertiary);
-    }
-    tbody tr:hover { background: var(--bg-tertiary); }
-    .muted { color: var(--text-secondary); }
-    .btn-delete {
-      background: transparent;
-      border: 1px solid var(--negative);
-      color: var(--negative);
-      padding: 6px 12px;
-      cursor: pointer;
-      font-size: 12px;
-      border-radius: 6px;
-    }
-    .btn-delete:hover { background: rgba(239, 68, 68, 0.12); }
-    .empty {
-      padding: 24px;
-      border: 1px dashed var(--border);
-      border-radius: 8px;
-      text-align: center;
-      color: var(--text-secondary);
-      font-size: 13px;
-    }
-    @media (max-width: 768px) {
-      .container { padding: 20px 16px 32px; }
-      .topbar { flex-direction: column; align-items: flex-start; }
-      .form-grid { grid-template-columns: 1fr; }
-      .btn-primary { width: 100%; }
-      .card, .section-card { padding: 24px; }
-    }
-  </style>
-</head>
-<body>
-  <%
-    const systemCategories = categories.filter(c => c.system_defined);
-    const customCategories = categories.filter(c => !c.system_defined);
-  %>
-  <div class="container">
-    <div class="topbar">
-      <div class="title-wrap">
-        <h1>🏷️ Category Ops</h1>
-        <p class="subtitle">View system categories and manage custom ones</p>
-      </div>
-      <a class="dashboard-link" href="/dashboard">← Back to Dashboard</a>
-    </div>
+<h2>Manage Categories</h2>
 
-    <div class="ops-tabs">
-      <a class="ops-tab" href="/ops">🧭 Ops Home</a>
-      <a class="ops-tab" href="/ops/upload">📤 Upload</a>
-      <a class="ops-tab active" href="/ops/categories">🏷️ Categories</a>
-      <a class="ops-tab" href="/ops/banks">🏦 Banks</a>
-    </div>
+<div style="margin-top: 40px;">
+  <h3 style="font-size: 16px; margin-bottom: 20px;">System Categories</h3>
 
-    <% if (feedback) { %>
-      <div class="alert <%= feedback.status === 'success' ? 'success' : 'error' %>">
-        <%= feedback.message %>
-      </div>
-    <% } %>
+  <table style="width: 100%; border-collapse: collapse;">
+    <thead style="background: var(--bg-tertiary);">
+      <tr>
+        <th style="padding: 12px; text-align: left; font-weight: 600; color: var(--text-secondary); font-size: 12px;">Name</th>
+        <th style="padding: 12px; text-align: left; font-weight: 600; color: var(--text-secondary); font-size: 12px;">Description</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% categories.filter(c => c.system_defined).forEach(cat => { %>
+      <tr style="border-bottom: 1px solid var(--border);">
+        <td style="padding: 12px;"><%= cat.name %></td>
+        <td style="padding: 12px; color: var(--text-secondary);"><%= cat.description %></td>
+      </tr>
+      <% }); %>
+    </tbody>
+  </table>
+</div>
 
-    <div class="grid">
-      <div class="card">
-        <div class="card-title">System Categories</div>
-        <div class="metric"><%= systemCategories.length %></div>
-        <div class="metric-label">Seeded default categories</div>
-      </div>
-      <div class="card">
-        <div class="card-title">Custom Categories</div>
-        <div class="metric"><%= customCategories.length %></div>
-        <div class="metric-label">Created by you</div>
-      </div>
-    </div>
+<% if (categories.some(c => !c.system_defined)) { %>
+<div style="margin-top: 40px;">
+  <h3 style="font-size: 16px; margin-bottom: 20px;">Custom Categories</h3>
+  <table style="width: 100%; border-collapse: collapse;">
+    <thead style="background: var(--bg-tertiary);">
+      <tr>
+        <th style="padding: 12px; text-align: left; font-weight: 600; color: var(--text-secondary); font-size: 12px;">Name</th>
+        <th style="padding: 12px; text-align: left; font-weight: 600; color: var(--text-secondary); font-size: 12px;">Description</th>
+        <th style="padding: 12px; text-align: center; font-weight: 600; color: var(--text-secondary); font-size: 12px;">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% categories.filter(c => !c.system_defined).forEach(cat => { %>
+      <tr style="border-bottom: 1px solid var(--border);">
+        <td style="padding: 12px;"><%= cat.name %></td>
+        <td style="padding: 12px; color: var(--text-secondary);"><%= cat.description %></td>
+        <td style="padding: 12px; text-align: center;">
+          <button style="padding: 6px 12px; background: #ef4444; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">Delete</button>
+        </td>
+      </tr>
+      <% }); %>
+    </tbody>
+  </table>
+</div>
+<% } %>
 
-    <div class="section-card" style="margin-bottom:24px;">
-      <div class="section-header">
-        <h2 class="section-title">Add Custom Category</h2>
-      </div>
-      <form action="/ops/categories" method="POST" class="form-grid">
-        <input type="text" name="name" placeholder="Category name (e.g., Travel)" required maxlength="100" />
-        <input type="text" name="description" placeholder="Description (optional)" maxlength="255" />
-        <button class="btn-primary" type="submit">Add Category</button>
-      </form>
-    </div>
-
-    <div class="section-card" style="margin-bottom:24px;">
-      <div class="section-header">
-        <h2 class="section-title">System Categories</h2>
-      </div>
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Description</th>
-            </tr>
-          </thead>
-          <tbody>
-            <% systemCategories.forEach(cat => { %>
-              <tr>
-                <td><%= cat.name %></td>
-                <td class="muted"><%= cat.description || '—' %></td>
-              </tr>
-            <% }); %>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <div class="section-card">
-      <div class="section-header">
-        <h2 class="section-title">Custom Categories</h2>
-      </div>
-      <% if (customCategories.length === 0) { %>
-        <div class="empty">No custom categories yet. Add one above.</div>
-      <% } else { %>
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Description</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              <% customCategories.forEach(cat => { %>
-                <tr>
-                  <td><%= cat.name %></td>
-                  <td class="muted"><%= cat.description || '—' %></td>
-                  <td>
-                    <form action="/ops/categories/<%= cat.id %>/delete" method="POST" onsubmit="return confirm('Delete this category?');">
-                      <button class="btn-delete" type="submit">Delete</button>
-                    </form>
-                  </td>
-                </tr>
-              <% }); %>
-            </tbody>
-          </table>
-        </div>
-      <% } %>
-    </div>
-  </div>
-</body>
-</html>
+<div style="margin-top: 40px; padding: 20px; background: var(--bg-secondary); border-radius: 8px; border: 1px dashed var(--border);">
+  <h3 style="font-size: 14px; margin-bottom: 12px;">Add Custom Category</h3>
+  <form style="display: flex; gap: 12px;">
+    <input type="text" placeholder="Category name" style="flex: 1; padding: 10px; background: var(--bg-tertiary); border: 1px solid var(--border); border-radius: 4px; color: var(--text-primary);">
+    <button type="submit" style="padding: 10px 20px; background: var(--accent); color: #000; border: none; border-radius: 4px; cursor: pointer; font-weight: 600;">Add</button>
+  </form>
+</div>

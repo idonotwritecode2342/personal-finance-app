@@ -106,6 +106,3 @@ dist
 # Uploaded files
 uploads/
 *.pdf
-
-# Git worktrees
-.worktrees/

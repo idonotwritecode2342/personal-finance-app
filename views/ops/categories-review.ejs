@@ -126,14 +126,6 @@
     <div class="progress-fill" style="width: 80%;"></div>
   </div>
 
-  <div style="max-width: 1000px; margin: 0 auto 40px; display: flex; justify-content: space-between; font-size: 12px; color: var(--text-secondary);">
-    <span>1. Upload</span>
-    <span>2. Confirm Bank</span>
-    <span>3. Review</span>
-    <span style="color: var(--accent);">4. Categories</span>
-    <span>5. Confirm</span>
-  </div>
-
   <div class="container">
     <div class="card">
       <h2>Step 4: Category Review</h2>
@@ -157,11 +149,21 @@
                 <%= tx.transaction_type === 'debit' ? '-' : '+' %> <%= Math.abs(tx.amount).toFixed(2) %>
               </td>
               <td>
-                <select class="category-select" data-id="<%= idx %>" data-category-id="<%= tx.category_id || '' %>">
+                <select class="category-select" data-id="<%= idx %>">
                   <option value="">Uncategorized</option>
-                  <% categories.forEach(cat => { %>
-                  <option value="<%= cat.id %>"><%= cat.name %></option>
-                  <% }); %>
+                  <option value="Groceries">Groceries</option>
+                  <option value="Transport">Transport</option>
+                  <option value="Utilities">Utilities</option>
+                  <option value="Entertainment">Entertainment</option>
+                  <option value="Dining">Dining</option>
+                  <option value="Healthcare">Healthcare</option>
+                  <option value="Subscriptions">Subscriptions</option>
+                  <option value="Salary/Income">Salary/Income</option>
+                  <option value="Savings">Savings</option>
+                  <option value="Investments">Investments</option>
+                  <option value="Insurance">Insurance</option>
+                  <option value="Shopping">Shopping</option>
+                  <option value="Fees">Fees</option>
                 </select>
               </td>
             </tr>
@@ -188,18 +190,9 @@
     const selects = document.querySelectorAll('.category-select');
 
     selects.forEach(select => {
-      // Set initial selected value from auto-assignment
-      const categoryId = select.getAttribute('data-category-id');
-      if (categoryId) {
-        select.value = categoryId;
-      }
-
       select.addEventListener('change', () => {
         select.classList.toggle('uncategorized', select.value === '');
       });
-
-      // Trigger initial styling
-      select.classList.toggle('uncategorized', select.value === '');
     });
 
     form.addEventListener('submit', async (e) => {
@@ -208,7 +201,7 @@
       loading.style.display = 'block';
 
       const categorizedTransactions = Array.from(selects).map(select => ({
-        category_id: select.value ? parseInt(select.value) : null
+        category_id: select.value || null
       }));
 
       try {

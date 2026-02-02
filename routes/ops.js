@@ -4,6 +4,7 @@ const path = require('path');
 const fs = require('fs');
 const { extractTextFromPDF } = require('../lib/pdf-extractor');
 const { detectBank } = require('../lib/bank-detector');
+const { assignCategoriesToTransactions } = require('../lib/llm-extractor');
 
 const router = express.Router();
 
@@ -147,14 +148,19 @@ router.post('/upload/extract-transactions', async (req, res) => {
 
     const { statementText } = req.session.uploadState;
     const extracted = await extractTransactionsFromText(statementText);
-    req.session.uploadState.extractedTransactions = extracted.transactions || [];
+    const transactions = extracted.transactions || [];
+
+    // Auto-assign categories to transactions
+    const categorizedTransactions = await assignCategoriesToTransactions(transactions);
+
+    req.session.uploadState.extractedTransactions = categorizedTransactions;
     req.session.uploadState.step = 3;
 
     res.json({
       success: true,
       step: 3,
-      transactions: extracted.transactions || [],
-      count: (extracted.transactions || []).length
+      transactions: categorizedTransactions,
+      count: categorizedTransactions.length
     });
   } catch (err) {
     console.error('Extraction error:', err);
@@ -308,7 +314,8 @@ router.post('/upload/confirm', async (req, res) => {
     });
   } catch (err) {
     console.error('Confirmation error:', err);
-    res.status(500).json({ error: err.message });
+    console.error('Error stack:', err.stack);
+    res.status(500).json({ error: err.message || 'Unknown error during import' });
   }
 });
 

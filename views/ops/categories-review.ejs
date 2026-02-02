@@ -157,7 +157,7 @@
                 <%= tx.transaction_type === 'debit' ? '-' : '+' %> <%= Math.abs(tx.amount).toFixed(2) %>
               </td>
               <td>
-                <select class="category-select" data-id="<%= idx %>">
+                <select class="category-select" data-id="<%= idx %>" data-category-id="<%= tx.category_id || '' %>">
                   <option value="">Uncategorized</option>
                   <% categories.forEach(cat => { %>
                   <option value="<%= cat.id %>"><%= cat.name %></option>
@@ -188,9 +188,18 @@
     const selects = document.querySelectorAll('.category-select');
 
     selects.forEach(select => {
+      // Set initial selected value from auto-assignment
+      const categoryId = select.getAttribute('data-category-id');
+      if (categoryId) {
+        select.value = categoryId;
+      }
+
       select.addEventListener('change', () => {
         select.classList.toggle('uncategorized', select.value === '');
       });
+
+      // Trigger initial styling
+      select.classList.toggle('uncategorized', select.value === '');
     });
 
     form.addEventListener('submit', async (e) => {

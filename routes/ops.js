@@ -481,25 +481,68 @@ router.post('/categories/:id/delete', async (req, res) => {
 // GET /ops/banks - Bank account management page
 router.get('/banks', async (req, res) => {
   try {
+    // Fetch accounts with institution details
     const accounts = await pool.query(
-      `SELECT ba.id, ba.bank_name, ba.account_type, ba.account_number_masked, ba.currency, ba.confirmed, c.name as country
+      `SELECT 
+        ba.id, 
+        ba.bank_name, 
+        ba.account_name,
+        ba.account_type, 
+        ba.account_number_masked, 
+        ba.currency, 
+        ba.is_active,
+        ba.notes,
+        ba.institution_id,
+        c.code as country_code,
+        c.name as country,
+        i.name as institution_name,
+        i.institution_type
        FROM bank_accounts ba
        JOIN countries c ON ba.country_id = c.id
+       LEFT JOIN institutions i ON ba.institution_id = i.id
        WHERE ba.user_id = $1
        ORDER BY ba.created_at DESC`,
       [req.session.userId]
     );
 
-    const countries = await pool.query(
-      'SELECT id, code, name, currency_code FROM countries ORDER BY name ASC'
+    // Fetch institutions grouped by country
+    const institutionsResult = await pool.query(
+      `SELECT 
+        i.id, 
+        i.name, 
+        i.institution_type,
+        c.code as country_code,
+        c.name as country_name,
+        c.currency_code
+       FROM institutions i
+       JOIN countries c ON i.country_id = c.id
+       WHERE i.is_active = true
+       ORDER BY c.name, i.institution_type, i.name`
     );
 
+    // Group institutions by country
+    const institutionsByCountry = {};
+    institutionsResult.rows.forEach(row => {
+      if (!institutionsByCountry[row.country_code]) {
+        institutionsByCountry[row.country_code] = {
+          country: row.country_name,
+          currency: row.currency_code,
+          institutions: []
+        };
+      }
+      institutionsByCountry[row.country_code].institutions.push({
+        id: row.id,
+        name: row.name,
+        institution_type: row.institution_type
+      });
+    });
+
     res.render('ops/banks', {
-      title: 'Bank Accounts',
-      subtitle: 'Manage your linked bank accounts',
+      title: 'Accounts',
+      subtitle: 'Manage your linked accounts',
       currentPage: 'banks',
       accounts: accounts.rows,
-      countries: countries.rows,
+      institutionsByCountry,
       feedback: buildFeedback(req.query)
     });
   } catch (err) {
@@ -508,73 +551,94 @@ router.get('/banks', async (req, res) => {
   }
 });
 
-// POST /ops/banks - Create manual bank account
+// POST /ops/banks - Create account linked to institution
 router.post('/banks', async (req, res) => {
   try {
-    const bankName = req.body.bank_name?.trim();
+    const institutionId = parseInt(req.body.institution_id);
+    const accountName = req.body.account_name?.trim();
     const accountType = req.body.account_type;
-    const countryCode = req.body.country_code;
     const accountNumberMasked = req.body.account_number_masked?.trim() || null;
-    const confirmed = req.body.confirmed === 'on';
+    const notes = req.body.notes?.trim() || null;
+    const isActive = req.body.is_active === 'on';
 
-    if (!bankName || !countryCode) {
-      return res.redirect('/ops/banks?status=error&message=Bank%20name%20and%20country%20are%20required');
+    if (!institutionId || !accountName) {
+      return res.redirect('/ops/banks?status=error&message=Institution%20and%20account%20name%20are%20required');
     }
 
-    const validAccountTypes = ['checking', 'savings', 'investment'];
+    const validAccountTypes = [
+      'checking', 'savings', 'credit_card', 'loan',
+      'nro', 'nre', 'fd',
+      'brokerage', 'isa', 'sipp', 'pension', 'crypto',
+      'other'
+    ];
     if (!validAccountTypes.includes(accountType)) {
       return res.redirect('/ops/banks?status=error&message=Invalid%20account%20type');
     }
 
-    const countryResult = await pool.query(
-      'SELECT id, currency_code FROM countries WHERE code = $1',
-      [countryCode]
+    // Get institution details (includes country and currency)
+    const institutionResult = await pool.query(
+      `SELECT i.id, i.name, c.id as country_id, c.currency_code
+       FROM institutions i
+       JOIN countries c ON i.country_id = c.id
+       WHERE i.id = $1`,
+      [institutionId]
     );
 
-    if (countryResult.rows.length === 0) {
-      return res.redirect('/ops/banks?status=error&message=Invalid%20country');
+    if (institutionResult.rows.length === 0) {
+      return res.redirect('/ops/banks?status=error&message=Invalid%20institution');
     }
+
+    const institution = institutionResult.rows[0];
 
     await pool.query(
       `INSERT INTO bank_accounts
-      (user_id, country_id, bank_name, account_type, account_number_masked, currency, confirmed)
-      VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+      (user_id, country_id, institution_id, bank_name, account_name, account_type, account_number_masked, currency, is_active, notes, confirmed)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, true)`,
       [
         req.session.userId,
-        countryResult.rows[0].id,
-        bankName,
+        institution.country_id,
+        institutionId,
+        institution.name,  // Store institution name in bank_name for backwards compatibility
+        accountName,
         accountType,
         accountNumberMasked,
-        countryResult.rows[0].currency_code,
-        confirmed
+        institution.currency_code,
+        isActive,
+        notes
       ]
     );
 
-    return res.redirect('/ops/banks?status=success&message=Bank%20account%20added');
+    return res.redirect('/ops/banks?status=success&message=Account%20added');
   } catch (err) {
-    console.error('Create bank account error:', err);
-    return res.redirect('/ops/banks?status=error&message=Failed%20to%20add%20bank%20account');
+    console.error('Create account error:', err);
+    return res.redirect('/ops/banks?status=error&message=Failed%20to%20add%20account');
   }
 });
 
-// POST /ops/banks/:id/update - Update existing bank account
+// POST /ops/banks/:id/update - Update existing account
 router.post('/banks/:id/update', async (req, res) => {
   try {
     const bankAccountId = Number(req.params.id);
-    const bankName = req.body.bank_name?.trim();
+    const accountName = req.body.account_name?.trim();
     const accountType = req.body.account_type;
     const accountNumberMasked = req.body.account_number_masked?.trim() || null;
-    const confirmed = req.body.confirmed === 'on';
+    const notes = req.body.notes?.trim() || null;
+    const isActive = req.body.is_active === 'on';
 
     if (!Number.isInteger(bankAccountId)) {
-      return res.redirect('/ops/banks?status=error&message=Invalid%20bank%20account');
+      return res.redirect('/ops/banks?status=error&message=Invalid%20account');
     }
 
-    if (!bankName) {
-      return res.redirect('/ops/banks?status=error&message=Bank%20name%20is%20required');
+    if (!accountName) {
+      return res.redirect('/ops/banks?status=error&message=Account%20name%20is%20required');
     }
 
-    const validAccountTypes = ['checking', 'savings', 'investment'];
+    const validAccountTypes = [
+      'checking', 'savings', 'credit_card', 'loan',
+      'nro', 'nre', 'fd',
+      'brokerage', 'isa', 'sipp', 'pension', 'crypto',
+      'other'
+    ];
     if (!validAccountTypes.includes(accountType)) {
       return res.redirect('/ops/banks?status=error&message=Invalid%20account%20type');
     }
@@ -585,31 +649,33 @@ router.post('/banks/:id/update', async (req, res) => {
     );
 
     if (accountResult.rows.length === 0) {
-      return res.redirect('/ops/banks?status=error&message=Bank%20account%20not%20found');
+      return res.redirect('/ops/banks?status=error&message=Account%20not%20found');
     }
 
     await pool.query(
       `UPDATE bank_accounts
-       SET bank_name = $1, account_type = $2, account_number_masked = $3, confirmed = $4, updated_at = CURRENT_TIMESTAMP
-       WHERE id = $5`,
-      [bankName, accountType, accountNumberMasked, confirmed, bankAccountId]
+       SET account_name = $1, account_type = $2, account_number_masked = $3, 
+           is_active = $4, notes = $5, updated_at = CURRENT_TIMESTAMP
+       WHERE id = $6`,
+      [accountName, accountType, accountNumberMasked, isActive, notes, bankAccountId]
     );
 
-    return res.redirect('/ops/banks?status=success&message=Bank%20account%20updated');
+    return res.redirect('/ops/banks?status=success&message=Account%20updated');
   } catch (err) {
-    console.error('Update bank account error:', err);
-    return res.redirect('/ops/banks?status=error&message=Failed%20to%20update%20bank%20account');
+    console.error('Update account error:', err);
+    return res.redirect('/ops/banks?status=error&message=Failed%20to%20update%20account');
   }
 });
 
-// POST /ops/banks/:id/delete - Delete bank account
+// POST /ops/banks/:id/delete - Delete account
 router.post('/banks/:id/delete', async (req, res) => {
   try {
     const bankAccountId = Number(req.params.id);
     if (!Number.isInteger(bankAccountId)) {
-      return res.redirect('/ops/banks?status=error&message=Invalid%20bank%20account');
+      return res.redirect('/ops/banks?status=error&message=Invalid%20account');
     }
 
+    // Check for existing transactions
     const usageResult = await pool.query(
       'SELECT COUNT(*)::int AS count FROM transactions WHERE bank_account_id = $1 AND user_id = $2',
       [bankAccountId, req.session.userId]
@@ -624,10 +690,10 @@ router.post('/banks/:id/delete', async (req, res) => {
       [bankAccountId, req.session.userId]
     );
 
-    return res.redirect('/ops/banks?status=success&message=Bank%20account%20deleted');
+    return res.redirect('/ops/banks?status=success&message=Account%20deleted');
   } catch (err) {
-    console.error('Delete bank account error:', err);
-    return res.redirect('/ops/banks?status=error&message=Failed%20to%20delete%20bank%20account');
+    console.error('Delete account error:', err);
+    return res.redirect('/ops/banks?status=error&message=Failed%20to%20delete%20account');
   }
 });
 

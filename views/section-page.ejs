@@ -35,6 +35,13 @@
       flex-wrap: wrap;
     }
 
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+
     .header-title {
       font-size: 20px;
       font-weight: 600;
@@ -42,32 +49,28 @@
 
     .header-nav {
       display: flex;
-      gap: 8px;
+      gap: 16px;
       align-items: center;
       flex-wrap: wrap;
     }
 
     .menu-link {
-      border: 1px solid var(--border);
-      border-radius: 6px;
       color: var(--text-secondary);
       text-decoration: none;
-      font-size: 13px;
-      padding: 8px 12px;
+      font-size: 14px;
+      padding: 2px 0;
       transition: all 0.2s ease;
-      background: var(--bg-tertiary);
+      border-bottom: 2px solid transparent;
     }
 
     .menu-link:hover {
-      background: var(--bg-primary);
       color: var(--accent);
-      border-color: var(--accent);
+      border-bottom-color: var(--accent);
     }
 
     .menu-link.active {
       color: var(--accent);
-      border-color: var(--accent);
-      background: var(--bg-primary);
+      border-bottom-color: var(--accent);
     }
 
     .icon-link {
@@ -89,6 +92,35 @@
       background: var(--bg-primary);
       color: var(--accent);
       border-color: var(--accent);
+    }
+
+    .header-icons {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .icon-select {
+      position: relative;
+      overflow: hidden;
+    }
+
+    .icon-select span {
+      pointer-events: none;
+      font-size: 18px;
+      line-height: 1;
+    }
+
+    .country-selector {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      cursor: pointer;
+      appearance: none;
+      border: none;
+      background: transparent;
     }
 
     .container {
@@ -126,16 +158,27 @@
 </head>
 <body>
   <header class="header">
-    <div class="header-title">Mission Control</div>
-    <nav class="header-nav">
-      <a href="/dashboard" class="menu-link <%= pageKey === 'dashboard' ? 'active' : '' %>">Dashboard</a>
-      <a href="/analytics" class="menu-link <%= pageKey === 'analytics' ? 'active' : '' %>">Analytics</a>
-      <a href="/agent" class="menu-link <%= pageKey === 'agent' ? 'active' : '' %>">Agent</a>
-      <a href="/investments" class="menu-link <%= pageKey === 'investments' ? 'active' : '' %>">Investments</a>
-      <a href="/goals" class="menu-link <%= pageKey === 'goals' ? 'active' : '' %>">Goals</a>
+    <div class="header-left">
+      <div class="header-title">Mission Control</div>
+      <nav class="header-nav">
+        <a href="/dashboard" class="menu-link <%= pageKey === 'dashboard' ? 'active' : '' %>">Dashboard</a>
+        <a href="/analytics" class="menu-link <%= pageKey === 'analytics' ? 'active' : '' %>">Analytics</a>
+        <a href="/agent" class="menu-link <%= pageKey === 'agent' ? 'active' : '' %>">Agent</a>
+        <a href="/investments" class="menu-link <%= pageKey === 'investments' ? 'active' : '' %>">Investments</a>
+        <a href="/goals" class="menu-link <%= pageKey === 'goals' ? 'active' : '' %>">Goals</a>
+      </nav>
+    </div>
+    <div class="header-icons">
+      <label class="icon-link icon-select" title="Country and Currency">
+        <span>💱</span>
+        <select class="country-selector" aria-label="Country and currency">
+          <option value="UK">🇬🇧 United Kingdom (GBP)</option>
+          <option value="IN">🇮🇳 India (INR)</option>
+        </select>
+      </label>
       <a href="/ops" class="icon-link" title="Ops">⚙️</a>
-      <a href="/logout" class="menu-link">Logout</a>
-    </nav>
+      <a href="/logout" class="icon-link" title="Logout">↩</a>
+    </div>
   </header>
 
   <main class="container">
@@ -145,5 +188,6 @@
       <p><%= subtitle %></p>
     </section>
   </main>
+  <%- include('partials/chat-widget'); %>
 </body>
 </html>

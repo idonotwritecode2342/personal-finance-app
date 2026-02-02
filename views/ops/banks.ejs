@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Banks - Ops</title>
+  <title>Accounts - Ops</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     :root {
@@ -16,6 +16,7 @@
       --text-secondary: #b0b0b0;
       --border: #3a3a3a;
       --negative: #ef4444;
+      --blue: #3b82f6;
     }
     body {
       background: var(--bg-primary);
@@ -90,7 +91,7 @@
     }
     .stats-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
       gap: 24px;
       margin-bottom: 24px;
     }
@@ -98,7 +99,7 @@
       background: var(--bg-secondary);
       border: 1px solid var(--border);
       border-radius: 12px;
-      padding: 32px;
+      padding: 24px;
       transition: all 0.3s ease;
     }
     .card:hover {
@@ -106,20 +107,21 @@
       box-shadow: 0 12px 32px rgba(34, 197, 94, 0.08);
     }
     .card-title {
-      font-size: 12px;
+      font-size: 11px;
       text-transform: uppercase;
       letter-spacing: 1px;
       color: var(--text-secondary);
-      margin-bottom: 12px;
+      margin-bottom: 10px;
     }
     .metric {
       font-family: 'Courier New', monospace;
-      font-size: 34px;
+      font-size: 28px;
       font-weight: 700;
     }
     .metric-label {
       color: var(--text-secondary);
-      font-size: 13px;
+      font-size: 12px;
+      margin-top: 4px;
     }
     .section-card {
       background: var(--bg-secondary);
@@ -135,19 +137,44 @@
       color: var(--text-secondary);
       margin-bottom: 18px;
     }
-    .create-grid {
+    .form-row {
       display: grid;
-      grid-template-columns: 1.5fr 1fr 1fr 1fr auto;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
       gap: 12px;
-      align-items: center;
-      margin-bottom: 10px;
+      margin-bottom: 12px;
     }
-    .create-foot {
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .form-group label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-secondary);
+    }
+    .form-footer {
       display: flex;
       align-items: center;
+      justify-content: space-between;
       gap: 12px;
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border);
+    }
+    .checkbox-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
       color: var(--text-secondary);
-      font-size: 12px;
+      font-size: 13px;
+      cursor: pointer;
+    }
+    .checkbox-label input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      cursor: pointer;
     }
     input, select, button {
       border-radius: 6px;
@@ -163,18 +190,22 @@
       outline: none;
       border-color: var(--accent);
     }
+    input::placeholder {
+      color: var(--text-secondary);
+    }
     .btn-primary {
       background: var(--accent);
       color: #000;
       border: none;
-      padding: 10px 16px;
+      padding: 10px 20px;
       cursor: pointer;
       font-weight: 700;
+      transition: background 0.2s ease;
     }
     .btn-primary:hover { background: var(--accent-dark); }
     .table-wrap { overflow-x: auto; }
-    table { width: 100%; border-collapse: collapse; font-size: 14px; min-width: 980px; }
-    th, td { padding: 10px; border-bottom: 1px solid var(--border); text-align: left; }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; min-width: 900px; }
+    th, td { padding: 12px 10px; border-bottom: 1px solid var(--border); text-align: left; }
     th {
       text-transform: uppercase;
       letter-spacing: 0.5px;
@@ -183,11 +214,53 @@
       background: var(--bg-tertiary);
     }
     tbody tr:hover { background: var(--bg-tertiary); }
-    .row-form { display: contents; }
     .currency {
       font-family: 'Courier New', monospace;
       font-weight: 700;
     }
+    .institution-cell {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .institution-name {
+      font-weight: 600;
+    }
+    .institution-type {
+      font-size: 11px;
+      color: var(--text-secondary);
+      text-transform: capitalize;
+    }
+    .account-name-cell {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .account-name {
+      font-weight: 500;
+    }
+    .account-number {
+      font-size: 11px;
+      color: var(--text-secondary);
+      font-family: 'Courier New', monospace;
+    }
+    .type-pill {
+      font-size: 11px;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      display: inline-block;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border);
+    }
+    .type-pill.checking { border-color: var(--blue); color: var(--blue); }
+    .type-pill.savings { border-color: var(--accent); color: var(--accent); }
+    .type-pill.credit_card { border-color: #f59e0b; color: #f59e0b; }
+    .type-pill.investment, .type-pill.brokerage { border-color: #8b5cf6; color: #8b5cf6; }
+    .type-pill.nro, .type-pill.nre { border-color: #ec4899; color: #ec4899; }
+    .type-pill.isa, .type-pill.sipp, .type-pill.pension { border-color: #0ea5e9; color: #0ea5e9; }
     .status-pill {
       font-size: 11px;
       padding: 4px 8px;
@@ -203,62 +276,138 @@
       color: var(--accent);
       border-color: var(--accent);
     }
-    .status-pill.pending {
+    .status-pill.inactive {
       color: var(--text-secondary);
       border-color: var(--border);
+    }
+    .country-flag {
+      font-size: 16px;
+      margin-right: 4px;
     }
     .actions {
       display: flex;
       gap: 8px;
       align-items: center;
     }
+    .btn-icon {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+      padding: 6px 10px;
+      cursor: pointer;
+      font-size: 14px;
+      border-radius: 6px;
+      transition: all 0.2s ease;
+    }
+    .btn-icon:hover { border-color: var(--accent); color: var(--accent); }
+    .btn-icon.delete:hover { border-color: var(--negative); color: var(--negative); }
+    .empty {
+      border: 1px dashed var(--border);
+      border-radius: 8px;
+      padding: 32px;
+      color: var(--text-secondary);
+      text-align: center;
+      font-size: 14px;
+    }
+    .empty a { color: var(--accent); text-decoration: none; }
+    .empty a:hover { text-decoration: underline; }
+    
+    /* Edit Modal */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.7);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-overlay.active { display: flex; }
+    .modal {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 32px;
+      max-width: 500px;
+      width: 90%;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    .modal-title {
+      font-size: 18px;
+      margin-bottom: 20px;
+    }
+    .modal-actions {
+      display: flex;
+      gap: 12px;
+      justify-content: flex-end;
+      margin-top: 20px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border);
+    }
     .btn-secondary {
       background: transparent;
       color: var(--text-secondary);
       border: 1px solid var(--border);
-      padding: 8px 10px;
+      padding: 10px 16px;
       cursor: pointer;
-      font-size: 12px;
+      font-size: 14px;
     }
     .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
-    .btn-delete {
+    .btn-danger {
       background: transparent;
       border: 1px solid var(--negative);
       color: var(--negative);
-      padding: 8px 10px;
+      padding: 10px 16px;
       cursor: pointer;
-      font-size: 12px;
+      font-size: 14px;
     }
-    .btn-delete:hover { background: rgba(239, 68, 68, 0.12); }
-    .checkbox-wrap { display: flex; align-items: center; gap: 8px; }
-    .empty {
-      border: 1px dashed var(--border);
-      border-radius: 8px;
-      padding: 24px;
-      color: var(--text-secondary);
-      text-align: center;
-      font-size: 13px;
-    }
-    .empty a { color: var(--accent); text-decoration: none; }
+    .btn-danger:hover { background: rgba(239, 68, 68, 0.12); }
+    
     @media (max-width: 768px) {
       .container { padding: 20px 16px 32px; }
       .topbar { flex-direction: column; align-items: flex-start; }
-      .section-card, .card { padding: 24px; }
-      .create-grid { grid-template-columns: 1fr; }
-      .btn-primary { width: 100%; }
+      .section-card, .card { padding: 20px; }
+      .form-row { grid-template-columns: 1fr; }
+      .form-footer { flex-direction: column; align-items: stretch; }
+      .btn-primary { width: 100%; text-align: center; }
     }
   </style>
 </head>
 <body>
   <%
-    const activeAccounts = accounts.filter(a => a.confirmed).length;
-    const pendingAccounts = accounts.length - activeAccounts;
+    const safeAccounts = accounts || [];
+    const activeAccounts = safeAccounts.filter(a => a.is_active).length;
+    const bankAccounts = safeAccounts.filter(a => ['checking', 'savings', 'credit_card', 'nro', 'nre', 'fd'].includes(a.account_type)).length;
+    const investmentAccounts = safeAccounts.filter(a => ['brokerage', 'isa', 'sipp', 'pension', 'investment'].includes(a.account_type)).length;
+    
+    const countryFlags = { 'UK': '🇬🇧', 'IN': '🇮🇳' };
+    
+    const accountTypeLabels = {
+      'checking': 'Checking',
+      'savings': 'Savings',
+      'credit_card': 'Credit Card',
+      'loan': 'Loan',
+      'nro': 'NRO',
+      'nre': 'NRE',
+      'fd': 'Fixed Deposit',
+      'brokerage': 'Brokerage',
+      'isa': 'ISA',
+      'sipp': 'SIPP',
+      'pension': 'Pension',
+      'crypto': 'Crypto',
+      'investment': 'Investment',
+      'other': 'Other'
+    };
   %>
   <div class="container">
     <div class="topbar">
       <div class="title-wrap">
-        <h1>🏦 Bank Ops</h1>
-        <p class="subtitle">Create, update, and review linked bank accounts</p>
+        <h1>🏦 Accounts</h1>
+        <p class="subtitle">Manage bank accounts and investment accounts</p>
       </div>
       <a class="dashboard-link" href="/dashboard">← Back to Dashboard</a>
     </div>
@@ -267,7 +416,7 @@
       <a class="ops-tab" href="/ops">🧭 Ops Home</a>
       <a class="ops-tab" href="/ops/upload">📤 Upload</a>
       <a class="ops-tab" href="/ops/categories">🏷️ Categories</a>
-      <a class="ops-tab active" href="/ops/banks">🏦 Banks</a>
+      <a class="ops-tab active" href="/ops/banks">🏦 Accounts</a>
     </div>
 
     <% if (feedback) { %>
@@ -279,49 +428,99 @@
     <div class="stats-grid">
       <div class="card">
         <div class="card-title">Total Accounts</div>
-        <div class="metric"><%= accounts.length %></div>
-        <div class="metric-label">Across all countries</div>
+        <div class="metric"><%= safeAccounts.length %></div>
+        <div class="metric-label">Across all institutions</div>
       </div>
       <div class="card">
-        <div class="card-title">Active Accounts</div>
+        <div class="card-title">Active</div>
         <div class="metric"><%= activeAccounts %></div>
-        <div class="metric-label">Confirmed and ready</div>
+        <div class="metric-label">Currently active</div>
       </div>
       <div class="card">
-        <div class="card-title">Pending Accounts</div>
-        <div class="metric"><%= pendingAccounts %></div>
-        <div class="metric-label">Need confirmation</div>
+        <div class="card-title">Bank Accounts</div>
+        <div class="metric"><%= bankAccounts %></div>
+        <div class="metric-label">Checking, savings, cards</div>
+      </div>
+      <div class="card">
+        <div class="card-title">Investment</div>
+        <div class="metric"><%= investmentAccounts %></div>
+        <div class="metric-label">Brokerage, ISA, pension</div>
       </div>
     </div>
 
     <div class="section-card">
-      <h2 class="section-title">Add Manual Bank Account</h2>
+      <h2 class="section-title">Add New Account</h2>
       <form action="/ops/banks" method="POST">
-        <div class="create-grid">
-          <input type="text" name="bank_name" placeholder="Bank name (e.g., Barclays)" maxlength="100" required>
-          <select name="account_type" required>
-            <option value="checking">Checking</option>
-            <option value="savings">Savings</option>
-            <option value="investment">Investment</option>
-          </select>
-          <select name="country_code" required>
-            <% countries.forEach(country => { %>
-              <option value="<%= country.code %>"><%= country.name %> (<%= country.code %>)</option>
-            <% }); %>
-          </select>
-          <input type="text" name="account_number_masked" placeholder="Masked account (optional)" maxlength="20">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Institution</label>
+            <select name="institution_id" required id="institution-select">
+              <option value="">Select institution...</option>
+              <% Object.entries(institutionsByCountry || {}).forEach(([code, data]) => { %>
+                <optgroup label="<%= countryFlags[code] || '' %> <%= data.country %>">
+                  <% data.institutions.forEach(inst => { %>
+                    <option value="<%= inst.id %>" data-type="<%= inst.institution_type %>" data-country="<%= code %>">
+                      <%= inst.name %> (<%= inst.institution_type %>)
+                    </option>
+                  <% }); %>
+                </optgroup>
+              <% }); %>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Account Name</label>
+            <input type="text" name="account_name" placeholder="e.g., Joint Checking" maxlength="100" required>
+          </div>
+          <div class="form-group">
+            <label>Account Type</label>
+            <select name="account_type" required id="account-type-select">
+              <optgroup label="Banking">
+                <option value="checking">Checking</option>
+                <option value="savings">Savings</option>
+                <option value="credit_card">Credit Card</option>
+                <option value="loan">Loan</option>
+              </optgroup>
+              <optgroup label="India Specific">
+                <option value="nro">NRO Account</option>
+                <option value="nre">NRE Account</option>
+                <option value="fd">Fixed Deposit</option>
+              </optgroup>
+              <optgroup label="Investment">
+                <option value="brokerage">Brokerage</option>
+                <option value="isa">ISA</option>
+                <option value="sipp">SIPP</option>
+                <option value="pension">Pension</option>
+                <option value="crypto">Crypto</option>
+              </optgroup>
+              <optgroup label="Other">
+                <option value="other">Other</option>
+              </optgroup>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Account # (last 4)</label>
+            <input type="text" name="account_number_masked" placeholder="••••1234" maxlength="20">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Notes (optional)</label>
+            <input type="text" name="notes" placeholder="Any additional notes..." maxlength="255">
+          </div>
+        </div>
+        <div class="form-footer">
+          <label class="checkbox-label">
+            <input type="checkbox" name="is_active" checked>
+            Active account
+          </label>
           <button class="btn-primary" type="submit">Add Account</button>
         </div>
-        <label class="create-foot">
-          <input type="checkbox" name="confirmed" checked>
-          Mark this account as confirmed
-        </label>
       </form>
     </div>
 
     <div class="section-card">
-      <h2 class="section-title">Linked Accounts</h2>
-      <% if (accounts.length === 0) { %>
+      <h2 class="section-title">Your Accounts</h2>
+      <% if (safeAccounts.length === 0) { %>
         <div class="empty">
           No accounts yet. Add one above, or import via <a href="/ops/upload">PDF upload</a>.
         </div>
@@ -330,9 +529,9 @@
           <table>
             <thead>
               <tr>
-                <th>Bank Name</th>
+                <th>Institution</th>
+                <th>Account</th>
                 <th>Type</th>
-                <th>Account #</th>
                 <th>Country</th>
                 <th>Currency</th>
                 <th>Status</th>
@@ -340,39 +539,43 @@
               </tr>
             </thead>
             <tbody>
-              <% accounts.forEach(account => { %>
-                <tr>
-                  <% const formId = `account-${account.id}`; %>
+              <% safeAccounts.forEach(account => { %>
+                <tr data-account-id="<%= account.id %>">
                   <td>
-                    <input type="text" name="bank_name" value="<%= account.bank_name %>" maxlength="100" required form="<%= formId %>">
+                    <div class="institution-cell">
+                      <span class="institution-name"><%= account.institution_name || account.bank_name || 'Unknown' %></span>
+                      <span class="institution-type"><%= account.institution_type || 'bank' %></span>
+                    </div>
                   </td>
                   <td>
-                    <select name="account_type" form="<%= formId %>">
-                      <option value="checking" <%= account.account_type === 'checking' ? 'selected' : '' %>>Checking</option>
-                      <option value="savings" <%= account.account_type === 'savings' ? 'selected' : '' %>>Savings</option>
-                      <option value="investment" <%= account.account_type === 'investment' ? 'selected' : '' %>>Investment</option>
-                    </select>
+                    <div class="account-name-cell">
+                      <span class="account-name"><%= account.account_name || account.bank_name %></span>
+                      <% if (account.account_number_masked) { %>
+                        <span class="account-number">•••• <%= account.account_number_masked %></span>
+                      <% } %>
+                    </div>
                   </td>
                   <td>
-                    <input type="text" name="account_number_masked" value="<%= account.account_number_masked || '' %>" maxlength="20" placeholder="Optional" form="<%= formId %>">
+                    <span class="type-pill <%= account.account_type %>">
+                      <%= accountTypeLabels[account.account_type] || account.account_type %>
+                    </span>
                   </td>
-                  <td><%= account.country %></td>
+                  <td>
+                    <span class="country-flag"><%= countryFlags[account.country_code] || '' %></span>
+                    <%= account.country_code %>
+                  </td>
                   <td class="currency"><%= account.currency %></td>
                   <td>
-                    <label class="checkbox-wrap">
-                      <input type="checkbox" name="confirmed" <%= account.confirmed ? 'checked' : '' %> form="<%= formId %>">
-                      <span class="status-pill <%= account.confirmed ? 'active' : 'pending' %>"><%= account.confirmed ? 'Active' : 'Pending' %></span>
-                    </label>
+                    <span class="status-pill <%= account.is_active ? 'active' : 'inactive' %>">
+                      <%= account.is_active ? 'Active' : 'Inactive' %>
+                    </span>
                   </td>
                   <td class="actions">
-                    <form id="<%= formId %>" class="row-form" action="/ops/banks/<%= account.id %>/update" method="POST">
-                      <button class="btn-secondary" type="submit">Save</button>
-                      <button
-                        class="btn-delete"
-                        type="submit"
-                        formaction="/ops/banks/<%= account.id %>/delete"
-                        onclick="return confirm('Delete this bank account?');"
-                      >Delete</button>
+                    <button class="btn-icon" onclick="openEditModal(<%= account.id %>)" title="Edit">✏️</button>
+                    <form action="/ops/banks/<%= account.id %>/delete" method="POST" style="display:inline;">
+                      <button class="btn-icon delete" type="submit" 
+                              onclick="return confirm('Delete this account? This cannot be undone.');" 
+                              title="Delete">🗑️</button>
                     </form>
                   </td>
                 </tr>
@@ -383,5 +586,93 @@
       <% } %>
     </div>
   </div>
+
+  <!-- Edit Modal -->
+  <div class="modal-overlay" id="edit-modal">
+    <div class="modal">
+      <h2 class="modal-title">Edit Account</h2>
+      <form id="edit-form" action="" method="POST">
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label>Account Name</label>
+          <input type="text" name="account_name" id="edit-account-name" required maxlength="100">
+        </div>
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label>Account Type</label>
+          <select name="account_type" id="edit-account-type" required>
+            <optgroup label="Banking">
+              <option value="checking">Checking</option>
+              <option value="savings">Savings</option>
+              <option value="credit_card">Credit Card</option>
+              <option value="loan">Loan</option>
+            </optgroup>
+            <optgroup label="India Specific">
+              <option value="nro">NRO Account</option>
+              <option value="nre">NRE Account</option>
+              <option value="fd">Fixed Deposit</option>
+            </optgroup>
+            <optgroup label="Investment">
+              <option value="brokerage">Brokerage</option>
+              <option value="isa">ISA</option>
+              <option value="sipp">SIPP</option>
+              <option value="pension">Pension</option>
+              <option value="crypto">Crypto</option>
+            </optgroup>
+            <optgroup label="Other">
+              <option value="other">Other</option>
+            </optgroup>
+          </select>
+        </div>
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label>Account # (last 4)</label>
+          <input type="text" name="account_number_masked" id="edit-account-number" maxlength="20">
+        </div>
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label>Notes</label>
+          <input type="text" name="notes" id="edit-notes" maxlength="255">
+        </div>
+        <label class="checkbox-label">
+          <input type="checkbox" name="is_active" id="edit-is-active">
+          Active account
+        </label>
+        <div class="modal-actions">
+          <button type="button" class="btn-secondary" onclick="closeEditModal()">Cancel</button>
+          <button type="submit" class="btn-primary">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    // Account data for editing
+    const accountsData = <%- JSON.stringify(safeAccounts) %>;
+    
+    function openEditModal(accountId) {
+      const account = accountsData.find(a => a.id === accountId);
+      if (!account) return;
+      
+      document.getElementById('edit-form').action = `/ops/banks/${accountId}/update`;
+      document.getElementById('edit-account-name').value = account.account_name || account.bank_name || '';
+      document.getElementById('edit-account-type').value = account.account_type || 'checking';
+      document.getElementById('edit-account-number').value = account.account_number_masked || '';
+      document.getElementById('edit-notes').value = account.notes || '';
+      document.getElementById('edit-is-active').checked = account.is_active;
+      
+      document.getElementById('edit-modal').classList.add('active');
+    }
+    
+    function closeEditModal() {
+      document.getElementById('edit-modal').classList.remove('active');
+    }
+    
+    // Close modal on outside click
+    document.getElementById('edit-modal').addEventListener('click', function(e) {
+      if (e.target === this) closeEditModal();
+    });
+    
+    // Close modal on Escape key
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') closeEditModal();
+    });
+  </script>
 </body>
 </html>

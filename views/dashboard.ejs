@@ -38,27 +38,24 @@
     .header {
       background: var(--bg-secondary);
       border-bottom: 1px solid var(--border);
-      padding: 24px 40px;
+      padding: 20px 32px;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      position: sticky;
-      top: 0;
-      z-index: 100;
-      backdrop-filter: blur(10px);
-      background: rgba(37, 37, 37, 0.95);
+      gap: 16px;
+      flex-wrap: wrap;
     }
 
     .header-left {
       display: flex;
       align-items: center;
-      gap: 16px;
+      gap: 20px;
+      flex-wrap: wrap;
     }
 
     .header-title {
-      font-size: 24px;
+      font-size: 20px;
       font-weight: 600;
-      letter-spacing: -0.5px;
       color: var(--text-primary);
     }
 
@@ -69,40 +66,36 @@
       letter-spacing: 1px;
     }
 
-    .header-controls {
+    .header-icons {
       display: flex;
-      gap: 12px;
+      gap: 10px;
       align-items: center;
     }
 
     .header-nav {
       display: flex;
-      gap: 8px;
+      gap: 16px;
       align-items: center;
       flex-wrap: wrap;
     }
 
     .menu-link {
-      border: 1px solid var(--border);
-      border-radius: 6px;
       color: var(--text-secondary);
       text-decoration: none;
-      font-size: 13px;
-      padding: 8px 12px;
+      font-size: 14px;
+      padding: 2px 0;
       transition: all 0.2s ease;
-      background: var(--bg-tertiary);
+      border-bottom: 2px solid transparent;
     }
 
     .menu-link:hover {
-      background: var(--bg-primary);
       color: var(--accent);
-      border-color: var(--accent);
+      border-bottom-color: var(--accent);
     }
 
     .menu-link.active {
       color: var(--accent);
-      border-color: var(--accent);
-      background: var(--bg-primary);
+      border-bottom-color: var(--accent);
     }
 
     .control-btn {
@@ -126,20 +119,27 @@
       border-color: var(--accent);
     }
 
-    .country-selector {
-      padding: 8px 16px;
-      border-radius: 6px;
-      border: 1px solid var(--border);
-      background: var(--bg-tertiary);
-      color: var(--text-primary);
-      font-size: 13px;
-      cursor: pointer;
-      transition: all 0.2s ease;
+    .icon-select {
+      position: relative;
+      overflow: hidden;
     }
 
-    .country-selector:hover {
-      border-color: var(--accent);
-      background: var(--bg-primary);
+    .icon-select span {
+      pointer-events: none;
+      font-size: 18px;
+      line-height: 1;
+    }
+
+    .country-selector {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      cursor: pointer;
+      appearance: none;
+      border: none;
+      background: transparent;
     }
 
     /* ===== MAIN CONTAINER ===== */
@@ -550,17 +550,6 @@
         grid-template-columns: 1fr;
       }
 
-      .header {
-        flex-direction: column;
-        gap: 16px;
-        align-items: flex-start;
-      }
-
-    .header-controls {
-        width: 100%;
-        justify-content: flex-start;
-        flex-wrap: wrap;
-      }
     }
 
     /* ===== UTILITIES ===== */
@@ -577,16 +566,7 @@
   <!-- Header -->
   <div class="header">
     <div class="header-left">
-      <div>
-        <div class="header-title">💰 Mission Control</div>
-        <div class="header-subtitle">Personal Finance Dashboard</div>
-      </div>
-    </div>
-    <div class="header-controls">
-      <select class="country-selector" id="countrySelector">
-        <option value="UK">🇬🇧 United Kingdom (GBP)</option>
-        <option value="IN">🇮🇳 India (INR)</option>
-      </select>
+      <div class="header-title">Mission Control</div>
       <div class="header-nav">
         <a href="/dashboard" class="menu-link active">Dashboard</a>
         <a href="/analytics" class="menu-link">Analytics</a>
@@ -594,8 +574,17 @@
         <a href="/investments" class="menu-link">Investments</a>
         <a href="/goals" class="menu-link">Goals</a>
       </div>
+    </div>
+    <div class="header-icons">
+      <label class="control-btn icon-select" title="Country and Currency">
+        <span>💱</span>
+        <select class="country-selector" id="countrySelector" aria-label="Country and currency">
+          <option value="UK">🇬🇧 United Kingdom (GBP)</option>
+          <option value="IN">🇮🇳 India (INR)</option>
+        </select>
+      </label>
       <a href="/ops" class="control-btn" title="Ops">⚙️</a>
-      <a href="/logout" class="menu-link">Logout</a>
+      <a href="/logout" class="control-btn" title="Logout">↩</a>
     </div>
   </div>
 
@@ -904,5 +893,6 @@
     });
 
   </script>
+  <%- include('partials/chat-widget'); %>
 </body>
 </html>

@@ -11,6 +11,8 @@ const authRoutes = require('./routes/auth');
 const dashboardRoutes = require('./routes/dashboard');
 const opsRoutes = require('./routes/ops');
 const sectionRoutes = require('./routes/sections');
+const analyticsRoutes = require('./routes/analytics');
+const aiRoutes = require('./routes/ai');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -59,7 +61,10 @@ const isAuthenticated = (req, res, next) => {
 app.use('/', authRoutes);
 app.use('/dashboard', isAuthenticated, dashboardRoutes);
 app.use('/ops', isAuthenticated, opsRoutes);
+app.use('/analytics', isAuthenticated, analyticsRoutes);
+app.use('/api/analytics', isAuthenticated, analyticsRoutes);
 app.use('/', isAuthenticated, sectionRoutes);
+app.use('/api/ai', isAuthenticated, aiRoutes);
 
 // Redirect root to dashboard if logged in, else to login
 app.get('/', (req, res) => {

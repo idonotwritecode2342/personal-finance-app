@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Analytics - Personal Finance</title>
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --bg-primary: #1a1a1a;
+      --bg-secondary: #252525;
+      --bg-tertiary: #2d2d2d;
+      --accent: #22c55e;
+      --accent-dark: #16a34a;
+      --text-primary: #ffffff;
+      --text-secondary: #b0b0b0;
+      --border: #3a3a3a;
+      --positive: #22c55e;
+      --negative: #ef4444;
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    /* ===== HEADER ===== */
+    .header {
+      background: var(--bg-secondary);
+      border-bottom: 1px solid var(--border);
+      padding: 20px 32px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+
+    .header-title {
+      font-size: 20px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .header-subtitle {
+      font-size: 12px;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .header-icons {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .header-nav {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .menu-link {
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 14px;
+      padding: 2px 0;
+      transition: all 0.2s ease;
+      border-bottom: 2px solid transparent;
+    }
+
+    .menu-link:hover {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+
+    .menu-link.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+
+    .control-btn {
+      width: 40px;
+      height: 40px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: var(--bg-tertiary);
+      color: var(--text-secondary);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      transition: all 0.2s ease;
+      text-decoration: none;
+    }
+
+    .control-btn:hover {
+      background: var(--bg-primary);
+      color: var(--accent);
+      border-color: var(--accent);
+    }
+
+    .icon-select {
+      position: relative;
+      overflow: hidden;
+    }
+
+    .icon-select span {
+      pointer-events: none;
+      font-size: 18px;
+      line-height: 1;
+    }
+
+    .country-selector {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      cursor: pointer;
+      appearance: none;
+      border: none;
+      background: transparent;
+    }
+
+    /* ===== MAIN CONTAINER ===== */
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 40px;
+      animation: fadeInUp 0.6s ease-out;
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* ===== ANALYTICS HEADER WITH FILTERS ===== */
+    .analytics-header {
+      margin-bottom: 40px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 20px;
+    }
+
+    .analytics-title {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .analytics-title h1 {
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .analytics-title .subtitle {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-secondary);
+    }
+
+    .filter-controls {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .filter-label {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-secondary);
+    }
+
+    .filter-dropdown {
+      padding: 8px 12px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+
+    .filter-dropdown:hover {
+      border-color: var(--accent);
+      background: var(--bg-secondary);
+    }
+
+    .filter-dropdown:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.1);
+    }
+
+    /* ===== VIEW TABS ===== */
+    .view-tabs {
+      display: flex;
+      gap: 8px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 32px;
+      padding-bottom: 0;
+    }
+
+    .view-tab {
+      padding: 12px 16px;
+      border: none;
+      background: transparent;
+      color: var(--text-secondary);
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      border-bottom: 2px solid transparent;
+      font-weight: 500;
+    }
+
+    .view-tab:hover {
+      color: var(--text-primary);
+    }
+
+    .view-tab.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+
+    /* ===== ANALYTICS CARD ===== */
+    .analytics-card {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 32px;
+      margin-bottom: 24px;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .analytics-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--accent), transparent);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .analytics-card:hover {
+      border-color: var(--accent);
+      background: var(--bg-tertiary);
+      box-shadow: 0 12px 32px rgba(34, 197, 94, 0.08);
+    }
+
+    .analytics-card:hover::before {
+      opacity: 1;
+    }
+
+    .card-title {
+      font-size: 14px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 24px;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* ===== SANKEY CHART ===== */
+    .chart-container {
+      position: relative;
+      width: 100%;
+      height: 500px;
+      background: rgba(34, 197, 94, 0.02);
+      border-radius: 8px;
+      padding: 16px;
+    }
+
+    /* ===== SUMMARY METRICS ===== */
+    .summary-metrics {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-top: 24px;
+      padding-top: 24px;
+      border-top: 1px solid var(--border);
+    }
+
+    .metric {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .metric-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-secondary);
+      margin-bottom: 6px;
+    }
+
+    .metric-value {
+      font-size: 20px;
+      font-family: 'Courier New', monospace;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .metric-value.positive {
+      color: var(--positive);
+    }
+
+    .metric-value.negative {
+      color: var(--negative);
+    }
+
+    /* ===== LOADING STATE ===== */
+    .loading {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 500px;
+      color: var(--text-secondary);
+      font-size: 14px;
+    }
+
+    .loading::after {
+      content: '';
+      width: 20px;
+      height: 20px;
+      margin-left: 10px;
+      border: 2px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    /* ===== ERROR STATE ===== */
+    .error {
+      padding: 16px;
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.2);
+      border-radius: 8px;
+      color: var(--negative);
+      font-size: 13px;
+      margin-top: 16px;
+    }
+
+    /* ===== RESPONSIVE ===== */
+    @media (max-width: 768px) {
+      .container {
+        padding: 24px;
+      }
+
+      .analytics-header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .chart-container {
+        height: 400px;
+      }
+
+      .summary-metrics {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .filter-controls {
+        width: 100%;
+        flex-direction: column;
+      }
+
+      .filter-label {
+        width: 100%;
+      }
+
+      .filter-dropdown {
+        width: 100%;
+      }
+    }
+
+    /* ===== UTILITIES ===== */
+    .hidden {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <div class="header">
+    <div class="header-left">
+      <div class="header-title">Mission Control</div>
+      <div class="header-nav">
+        <a href="/dashboard" class="menu-link">Dashboard</a>
+        <a href="/analytics" class="menu-link active">Analytics</a>
+        <a href="/agent" class="menu-link">Agent</a>
+        <a href="/investments" class="menu-link">Investments</a>
+        <a href="/goals" class="menu-link">Goals</a>
+      </div>
+    </div>
+    <div class="header-icons">
+      <label class="control-btn icon-select" title="Country and Currency">
+        <span>💱</span>
+        <select class="country-selector" id="countrySelector" aria-label="Country and currency">
+          <option value="UK">🇬🇧 United Kingdom (GBP)</option>
+          <option value="IN">🇮🇳 India (INR)</option>
+        </select>
+      </label>
+      <a href="/ops" class="control-btn" title="Ops">⚙️</a>
+      <a href="/logout" class="control-btn" title="Logout">↩</a>
+    </div>
+  </div>
+
+  <!-- Main Container -->
+  <div class="container">
+    <!-- Analytics Header with Filters -->
+    <div class="analytics-header">
+      <div class="analytics-title">
+        <h1>📊 Analytics</h1>
+        <span class="subtitle">Financial Flow Analysis</span>
+      </div>
+      <div class="filter-controls">
+        <label class="filter-label">Period:</label>
+        <select id="filterDropdown" class="filter-dropdown">
+          <option value="last_7_days">Last 7 Days</option>
+          <option value="this_month" selected>This Month</option>
+          <option value="last_month">Last Month</option>
+          <option value="this_year">This Year</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- View Tabs -->
+    <div class="view-tabs">
+      <button class="view-tab active" data-view="sankey">
+        💰 Sankey Flow
+      </button>
+      <button class="view-tab" data-view="trends" style="opacity: 0.5; cursor: not-allowed;" disabled>
+        📈 Trends (Coming Soon)
+      </button>
+      <button class="view-tab" data-view="breakdown" style="opacity: 0.5; cursor: not-allowed;" disabled>
+        🥧 Category Breakdown (Coming Soon)
+      </button>
+    </div>
+
+    <!-- Sankey View -->
+    <div id="sankey-view" class="analytics-view">
+      <div class="analytics-card">
+        <h2 class="card-title">
+          <span>💳</span> Income → Spending Flow
+        </h2>
+        
+        <div id="chartContainer" class="chart-container">
+          <div class="loading">Loading data...</div>
+        </div>
+
+        <!-- Summary Metrics -->
+        <div class="summary-metrics">
+          <div class="metric">
+            <div class="metric-label">Total Income</div>
+            <div class="metric-value positive" id="totalIncome">$0.00</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">Total Expenses</div>
+            <div class="metric-value negative" id="totalExpenses">$0.00</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">Net Flow</div>
+            <div class="metric-value" id="netFlow">$0.00</div>
+          </div>
+        </div>
+
+        <div id="errorContainer" class="error hidden"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/analytics/sankey.js"></script>
+  <script>
+    // State management
+    const state = {
+      filter: 'this_month',
+      country: '<%= country %>',
+      currentView: 'sankey',
+      chart: null
+    };
+
+    // Get currency symbol based on country
+    function getCurrencySymbol(country) {
+      return country === 'UK' ? '£' : '₹';
+    }
+
+    // Format currency
+    function formatCurrency(value, country = state.country) {
+      const symbol = getCurrencySymbol(country);
+      return symbol + Math.abs(value).toLocaleString('en-US', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      });
+    }
+
+    // Fetch and render Sankey data
+    async function loadSankeyData() {
+      try {
+        const container = document.getElementById('chartContainer');
+        const errorContainer = document.getElementById('errorContainer');
+
+        // Show loading state
+        container.innerHTML = '<div class="loading">Loading data...</div>';
+        errorContainer.classList.add('hidden');
+
+        // Fetch data from API
+        const response = await fetch(
+          `/api/analytics/sankey?filter=${state.filter}&country=${state.country}`
+        );
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const result = await response.json();
+
+        if (!result.success) {
+          throw new Error(result.error || 'Failed to load data');
+        }
+
+        // Update summary metrics
+        document.getElementById('totalIncome').textContent = 
+          formatCurrency(result.data.summary.totalIncome);
+        document.getElementById('totalExpenses').textContent = 
+          formatCurrency(result.data.summary.totalExpense);
+        
+        const netFlowEl = document.getElementById('netFlow');
+        const netFlow = result.data.summary.netFlow;
+        netFlowEl.textContent = formatCurrency(netFlow);
+        netFlowEl.className = 'metric-value ' + (netFlow >= 0 ? 'positive' : 'negative');
+
+        // Initialize chart
+        initializeSankeyChart(container, result.data);
+      } catch (err) {
+        console.error('Error loading Sankey data:', err);
+        const errorContainer = document.getElementById('errorContainer');
+        errorContainer.textContent = '❌ ' + err.message;
+        errorContainer.classList.remove('hidden');
+        document.getElementById('chartContainer').innerHTML = '';
+      }
+    }
+
+    // Initialize ECharts Sankey
+    function initializeSankeyChart(container, data) {
+      if (!data.nodes || data.nodes.length === 0) {
+        container.innerHTML = '<div class="loading" style="height: auto; padding: 40px; text-align: center;">No data available for selected period</div>';
+        return;
+      }
+
+      // Dispose previous chart if exists
+      if (state.chart) {
+        state.chart.dispose();
+      }
+
+      // Create chart instance
+      state.chart = echarts.init(container);
+
+      // Transform nodes to include proper colors
+      const nodes = data.nodes.map((node, idx) => ({
+        name: node.name,
+        value: node.value,
+        itemStyle: {
+          color: node.color || '#b0b0b0'
+        }
+      }));
+
+      // Prepare links with proper source/target indices
+      const links = data.links.map(link => ({
+        source: link.source,
+        target: link.target,
+        value: link.value,
+        lineStyle: {
+          color: link.isIncome ? '#22c55e' : '#ef4444',
+          opacity: 0.3
+        },
+        itemStyle: {
+          color: link.isIncome ? '#22c55e' : '#ef4444'
+        }
+      }));
+
+      // Sankey configuration
+      const option = {
+        tooltip: {
+          trigger: 'item',
+          triggerOn: 'mousemove',
+          backgroundColor: 'rgba(50, 50, 50, 0.9)',
+          borderColor: '#3a3a3a',
+          textStyle: {
+            color: '#ffffff',
+            fontSize: 12
+          },
+          formatter: function(params) {
+            if (params.data.source !== undefined) {
+              // Link
+              return `
+                <div style="font-weight: 600;">${params.data.source} → ${params.data.target}</div>
+                <div>${formatCurrency(params.value)}</div>
+              `;
+            } else {
+              // Node
+              return `
+                <div style="font-weight: 600;">${params.name}</div>
+                ${params.value ? `<div>${formatCurrency(params.value)}</div>` : ''}
+              `;
+            }
+          }
+        },
+        series: [{
+          type: 'sankey',
+          nodes: nodes,
+          links: links,
+          layout: 'orthogonal',
+          orient: 'vertical',
+          nodeAlign: 'justify',
+          label: {
+            position: 'top',
+            color: '#b0b0b0',
+            fontSize: 11,
+            formatter: '{b}'
+          },
+          lineStyle: {
+            curveness: 0.5,
+            opacity: 0.5
+          },
+          emphasis: {
+            lineStyle: {
+              opacity: 0.8,
+              width: 2
+            }
+          }
+        }]
+      };
+
+      state.chart.setOption(option);
+
+      // Handle resize
+      window.addEventListener('resize', () => {
+        if (state.chart) {
+          state.chart.resize();
+        }
+      });
+    }
+
+    // Event listeners
+    document.getElementById('filterDropdown').addEventListener('change', (e) => {
+      state.filter = e.target.value;
+      loadSankeyData();
+    });
+
+    document.getElementById('countrySelector').addEventListener('change', (e) => {
+      state.country = e.target.value;
+      loadSankeyData();
+    });
+
+    // Initialize on page load
+    document.addEventListener('DOMContentLoaded', () => {
+      loadSankeyData();
+    });
+  </script>
+</body>
+</html>

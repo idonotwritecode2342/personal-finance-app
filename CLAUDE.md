@@ -173,70 +173,72 @@ See `/docs/plans/2026-02-01-mvp-1-0-design.md` for full design document.
 
 ## Database Schema Overview
 
-The database is organized into 9 domains with 22 tables. All schema is managed via versioned migrations in `/db/migrations/`.
+The database is organized into 9 domains with 21+ tables. All schema is managed via versioned migrations in `/db/migrations/`.
+
+### Migrations
+- **001_initial_schema.sql** - Core foundation (users, accounts, transactions, categories)
+- **002_future_state_schema.sql** - Enhanced features (institutions, balances, investments, goals, AI)
+- **003_ai_chat.sql** - AI chat conversations and messages
 
 ### Domain 1: Identity & Geo
-- **`users`** - Auth + preferences (`display_name`, `default_country_code`)
-- **`countries`** - UK, India with currency codes
-- **`currencies`** - GBP, INR, USD, EUR with symbols
-- **`currency_exchange_rates`** - FX rates with source tracking
+| Table | Purpose | Key Fields |
+|-------|---------|------------|
+| **`users`** | Authentication & user preferences | `email`, `password_hash`, `display_name`, `default_country_code` |
+| **`countries`** | Country codes & currency mapping | `code` (UK, IN), `name`, `currency_code` |
+| **`currencies`** | Supported currencies | `code` (GBP, INR, USD, EUR), `name`, `symbol` |
+| **`currency_exchange_rates`** | FX conversion rates | `from_currency`, `to_currency`, `rate`, `rate_date`, `source` |
 
 ### Domain 2: Institutions & Accounts
-- **`institutions`** - Banks and brokers by country (HSBC UK, HSBC India, ICICI, Zerodha, Vanguard, etc.)
-  - Includes `detection_patterns` JSONB for PDF auto-detection
-  - `institution_type`: bank, broker, pension, crypto_exchange, other
-- **`bank_accounts`** (renamed conceptually to "accounts") - User accounts at institutions
-  - Supports all types: checking, savings, credit_card, nro, nre, fd, brokerage, isa, sipp, pension, crypto
-  - Links to `institution_id` for structured bank reference
-  - `account_name` for user-defined labels
+| Table | Purpose | Key Fields |
+|-------|---------|------------|
+| **`institutions`** | Banks and brokers by country | `name`, `country_id`, `institution_type` (bank/broker/pension/crypto_exchange), `detection_patterns` (JSONB), `is_active` |
+| **`bank_accounts`** | User accounts at institutions | `user_id`, `institution_id`, `country_id`, `account_type`, `account_name`, `confirmed`, `is_active`, `opened_at`, `closed_at`, `notes` |
+
+Seeded institutions: HSBC (UK), Revolut, AMEX, Vanguard (UK); HSBC (IN), ICICI, Zerodha, Groww (IN)
 
 ### Domain 3: Account Balances
-- **`account_balances`** - Real-time + daily snapshots
-  - Trigger auto-updates balance on transaction insert/update/delete
-  - `source`: calculated, manual, statement, snapshot
-  - Supports historical balance charts
+| Table | Purpose | Key Fields |
+|-------|---------|------------|
+| **`account_balances`** | Real-time and historical balance snapshots | `account_id`, `balance`, `currency`, `as_of_date`, `as_of_time`, `source` (calculated/manual/statement/snapshot) |
 
 ### Domain 4: Transactions & Categories
-- **`transactions`** - Finalized transaction ledger
-  - Links to `account_id`, `pdf_upload_id`, `extracted_txn_id`
-  - `is_excluded` flag for filtering from reports
-- **`transaction_categories`** - System + user custom categories
-  - `user_id` (NULL = system category)
-  - `parent_id` for hierarchy
-  - `icon`, `color`, `is_income`, `is_active`, `display_order`
-- **`transaction_category_history`** - Audit trail for AI learning
-  - Records all category changes with `source` (llm_initial, user_override)
-  - Used in LLM prompt to learn from user corrections
+| Table | Purpose | Key Fields |
+|-------|---------|------------|
+| **`transaction_categories`** | System + user-defined spending categories | `name`, `user_id` (NULL=system), `parent_id`, `icon`, `color`, `is_income`, `is_active`, `display_order`, `description` |
+| **`transactions`** | Core transaction ledger | `user_id`, `bank_account_id` / `account_id`, `transaction_date`, `amount`, `currency`, `merchant`, `description`, `category_id`, `pdf_upload_id`, `extracted_txn_id`, `notes`, `is_excluded` |
+| **`transaction_category_history`** | Audit trail for AI learning | `transaction_id`, `old_category_id`, `new_category_id`, `source` (llm_initial/user_override/bulk_update), `confidence`, `changed_at` |
 
-### Domain 5: PDF Upload Pipeline
-- **`pdf_uploads`** - Upload metadata and LLM response
-  - `detected_institution_id`, `detection_confidence`
-  - `llm_model`, `llm_raw_response` JSONB, `error_message`
-- **`extracted_transactions`** - Staging table for review before import
-  - `status`: pending, approved, skipped, modified
-  - `suggested_category_id`, `suggestion_confidence`
-  - `user_category_id` for overrides
+Seeded categories: Groceries, Utilities, Transport, Entertainment, Dining, Healthcare, Subscriptions, Salary/Income, Savings, Investments, Insurance, Shopping, Fees (all with icons and colors)
+
+### Domain 5: PDF Upload & Extraction
+| Table | Purpose | Key Fields |
+|-------|---------|------------|
+| **`pdf_uploads`** | PDF upload metadata and LLM processing | `user_id`, `bank_account_id`, `file_name`, `file_hash`, `file_size_bytes`, `detected_institution_id`, `detection_confidence`, `bank_detected`, `transaction_count`, `upload_status`, `llm_model`, `llm_raw_response` (JSONB), `error_message`, `processed_at`, `uploaded_at` |
+| **`extracted_transactions`** | Staging table for transaction review before import | `pdf_upload_id`, `row_index`, `transaction_date`, `amount`, `currency`, `merchant`, `description`, `transaction_type` (debit/credit), `suggested_category_id`, `suggestion_confidence`, `status` (pending/approved/skipped/modified), `user_category_id`, `reviewed_at` |
 
 ### Domain 6: Investments
-- **`investments`** - User investments with manual valuations
-  - Links to `institution_id` (Zerodha, Vanguard, etc.)
-  - `investment_type`: stock, etf, mutual_fund, pension, property, crypto, fd, bond
-  - `initial_value`, `current_value`, `last_valued_at` (user-provided)
-- **`investment_valuations`** - Value history for charts
+| Table | Purpose | Key Fields |
+|-------|---------|------------|
+| **`investments`** | User investment holdings | `user_id`, `account_id`, `institution_id`, `name`, `symbol`, `investment_type` (stock/etf/mutual_fund/index_fund/pension/property/crypto/fd/bond), `currency`, `initial_value`, `current_value`, `last_valued_at` |
+| **`investment_valuations`** | Historical investment values for charts | `investment_id`, `value`, `valued_at` |
 
 ### Domain 7: Goals
-- **`goals`** - Savings/investment targets with deadlines
-  - `goal_type`: savings, investment, debt_payoff, net_worth, custom
-  - `target_amount`, `current_amount`, `target_date`
-- **`goal_links`** - Connect goals to accounts/investments for progress tracking
+| Table | Purpose | Key Fields |
+|-------|---------|------------|
+| **`goals`** | Financial targets and milestones | `user_id`, `goal_type` (savings/investment/debt_payoff/net_worth/custom), `name`, `description`, `target_amount`, `current_amount`, `target_date`, `priority`, `status` |
+| **`goal_links`** | Connect goals to accounts/investments for progress tracking | `goal_id`, `bank_account_id`, `investment_id`, `allocation_percentage` |
 
 ### Domain 8: Analytics & Snapshots
-- **`monthly_snapshots`** - Net worth and spend/income by month
-- **`budgets`** - Category budgets per month/country
+| Table | Purpose | Key Fields |
+|-------|---------|------------|
+| **`monthly_snapshots`** | End-of-month financial position snapshot | `user_id`, `snapshot_date`, `total_income`, `total_expenses`, `total_saved`, `net_worth`, `category_breakdown` (JSONB) |
+| **`budgets`** | Category spending budgets per month | `user_id`, `category_id`, `month`, `budget_amount`, `spent_amount`, `currency` |
 
 ### Domain 9: AI Chat
-- **`ai_conversations`** - Chat sessions with page context
-- **`ai_messages`** - Message history with tool usage metadata
+| Table | Purpose | Key Fields |
+|-------|---------|------------|
+| **`ai_conversations`** | Chat session metadata | `user_id`, `title`, `page_context`, `model_used`, `started_at`, `ended_at` |
+| **`ai_messages`** | Message history within conversations | `conversation_id`, `user_id`, `role` (user/assistant), `content`, `tokens_used`, `tools_called` (JSONB), `created_at` |
 
 ### Key Relationships
 ```

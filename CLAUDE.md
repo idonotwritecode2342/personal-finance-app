@@ -171,6 +171,106 @@ See `/docs/plans/2026-02-01-mvp-1-0-design.md` for full design document.
 
 ---
 
+## Database Schema Overview
+
+The database is organized into 9 domains with 21+ tables. All schema is managed via versioned migrations in `/db/migrations/`.
+
+### Migrations
+- **001_initial_schema.sql** - Core foundation (users, accounts, transactions, categories)
+- **002_future_state_schema.sql** - Enhanced features (institutions, balances, investments, goals, AI)
+- **003_ai_chat.sql** - AI chat conversations and messages
+
+### Domain 1: Identity & Geo
+| Table | Purpose | Key Fields |
+|-------|---------|------------|
+| **`users`** | Authentication & user preferences | `email`, `password_hash`, `display_name`, `default_country_code` |
+| **`countries`** | Country codes & currency mapping | `code` (UK, IN), `name`, `currency_code` |
+| **`currencies`** | Supported currencies | `code` (GBP, INR, USD, EUR), `name`, `symbol` |
+| **`currency_exchange_rates`** | FX conversion rates | `from_currency`, `to_currency`, `rate`, `rate_date`, `source` |
+
+### Domain 2: Institutions & Accounts
+| Table | Purpose | Key Fields |
+|-------|---------|------------|
+| **`institutions`** | Banks and brokers by country | `name`, `country_id`, `institution_type` (bank/broker/pension/crypto_exchange), `detection_patterns` (JSONB), `is_active` |
+| **`bank_accounts`** | User accounts at institutions | `user_id`, `institution_id`, `country_id`, `account_type`, `account_name`, `confirmed`, `is_active`, `opened_at`, `closed_at`, `notes` |
+
+Seeded institutions: HSBC (UK), Revolut, AMEX, Vanguard (UK); HSBC (IN), ICICI, Zerodha, Groww (IN)
+
+### Domain 3: Account Balances
+| Table | Purpose | Key Fields |
+|-------|---------|------------|
+| **`account_balances`** | Real-time and historical balance snapshots | `account_id`, `balance`, `currency`, `as_of_date`, `as_of_time`, `source` (calculated/manual/statement/snapshot) |
+
+### Domain 4: Transactions & Categories
+| Table | Purpose | Key Fields |
+|-------|---------|------------|
+| **`transaction_categories`** | System + user-defined spending categories | `name`, `user_id` (NULL=system), `parent_id`, `icon`, `color`, `is_income`, `is_active`, `display_order`, `description` |
+| **`transactions`** | Core transaction ledger | `user_id`, `bank_account_id` / `account_id`, `transaction_date`, `amount`, `currency`, `merchant`, `description`, `category_id`, `pdf_upload_id`, `extracted_txn_id`, `notes`, `is_excluded` |
+| **`transaction_category_history`** | Audit trail for AI learning | `transaction_id`, `old_category_id`, `new_category_id`, `source` (llm_initial/user_override/bulk_update), `confidence`, `changed_at` |
+
+Seeded categories: Groceries, Utilities, Transport, Entertainment, Dining, Healthcare, Subscriptions, Salary/Income, Savings, Investments, Insurance, Shopping, Fees (all with icons and colors)
+
+### Domain 5: PDF Upload & Extraction
+| Table | Purpose | Key Fields |
+|-------|---------|------------|
+| **`pdf_uploads`** | PDF upload metadata and LLM processing | `user_id`, `bank_account_id`, `file_name`, `file_hash`, `file_size_bytes`, `detected_institution_id`, `detection_confidence`, `bank_detected`, `transaction_count`, `upload_status`, `llm_model`, `llm_raw_response` (JSONB), `error_message`, `processed_at`, `uploaded_at` |
+| **`extracted_transactions`** | Staging table for transaction review before import | `pdf_upload_id`, `row_index`, `transaction_date`, `amount`, `currency`, `merchant`, `description`, `transaction_type` (debit/credit), `suggested_category_id`, `suggestion_confidence`, `status` (pending/approved/skipped/modified), `user_category_id`, `reviewed_at` |
+
+### Domain 6: Investments
+| Table | Purpose | Key Fields |
+|-------|---------|------------|
+| **`investments`** | User investment holdings | `user_id`, `account_id`, `institution_id`, `name`, `symbol`, `investment_type` (stock/etf/mutual_fund/index_fund/pension/property/crypto/fd/bond), `currency`, `initial_value`, `current_value`, `last_valued_at` |
+| **`investment_valuations`** | Historical investment values for charts | `investment_id`, `value`, `valued_at` |
+
+### Domain 7: Goals
+| Table | Purpose | Key Fields |
+|-------|---------|------------|
+| **`goals`** | Financial targets and milestones | `user_id`, `goal_type` (savings/investment/debt_payoff/net_worth/custom), `name`, `description`, `target_amount`, `current_amount`, `target_date`, `priority`, `status` |
+| **`goal_links`** | Connect goals to accounts/investments for progress tracking | `goal_id`, `bank_account_id`, `investment_id`, `allocation_percentage` |
+
+### Domain 8: Analytics & Snapshots
+| Table | Purpose | Key Fields |
+|-------|---------|------------|
+| **`monthly_snapshots`** | End-of-month financial position snapshot | `user_id`, `snapshot_date`, `total_income`, `total_expenses`, `total_saved`, `net_worth`, `category_breakdown` (JSONB) |
+| **`budgets`** | Category spending budgets per month | `user_id`, `category_id`, `month`, `budget_amount`, `spent_amount`, `currency` |
+
+### Domain 9: AI Chat
+| Table | Purpose | Key Fields |
+|-------|---------|------------|
+| **`ai_conversations`** | Chat session metadata | `user_id`, `title`, `page_context`, `model_used`, `started_at`, `ended_at` |
+| **`ai_messages`** | Message history within conversations | `conversation_id`, `user_id`, `role` (user/assistant), `content`, `tokens_used`, `tools_called` (JSONB), `created_at` |
+
+### Key Relationships
+```
+users ─┬─> bank_accounts ─> transactions ─> transaction_categories
+       │        │                 │
+       │        └─> account_balances
+       │                          └─> transaction_category_history
+       │
+       ├─> pdf_uploads ─> extracted_transactions
+       │
+       ├─> investments ─> investment_valuations
+       │
+       ├─> goals ─> goal_links ─┬─> bank_accounts
+       │                        └─> investments
+       │
+       └─> ai_conversations ─> ai_messages
+
+institutions ─┬─> bank_accounts
+              └─> investments
+```
+
+### Running Migrations
+```bash
+# Run all pending migrations
+node scripts/migrate.js
+
+# Run legacy schema.sql (backwards compatibility)
+node scripts/migrate.js --legacy
+```
+
+---
+
 ## Design System & Theme
 
 ### Color Palette

@@ -113,6 +113,30 @@ function buildFeedback(query) {
   };
 }
 
+// GET /ops - Ops landing page
+router.get('/', async (req, res) => {
+  try {
+    const [categoriesResult, accountsResult] = await Promise.all([
+      pool.query('SELECT COUNT(*)::int AS count FROM transaction_categories'),
+      pool.query(
+        `SELECT COUNT(*)::int AS count
+         FROM bank_accounts
+         WHERE user_id = $1`,
+        [req.session.userId]
+      )
+    ]);
+
+    res.render('ops/index', {
+      title: 'Ops',
+      totalCategories: categoriesResult.rows[0].count,
+      totalAccounts: accountsResult.rows[0].count
+    });
+  } catch (err) {
+    console.error('Ops home error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // POST /ops/upload/extract-transactions - Extract from LLM
 router.post('/upload/extract-transactions', async (req, res) => {
   try {

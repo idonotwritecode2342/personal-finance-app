@@ -38,7 +38,6 @@
 
     .header-left { display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
     .header-title { font-size: 20px; font-weight: 600; }
-    .header-subtitle { font-size: 12px; letter-spacing: 1px; text-transform: uppercase; color: var(--text-secondary); }
 
     .header-nav { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
     .menu-link {
@@ -63,6 +62,29 @@
       transition: all 0.2s ease; font-size: 18px;
     }
     .icon-link:hover { background: var(--bg-primary); color: var(--accent); border-color: var(--accent); }
+
+    .icon-select {
+      position: relative;
+      overflow: hidden;
+    }
+
+    .icon-select span {
+      pointer-events: none;
+      font-size: 18px;
+      line-height: 1;
+    }
+
+    .country-selector {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      cursor: pointer;
+      appearance: none;
+      border: none;
+      background: transparent;
+    }
 
     .container { max-width: 1400px; margin: 32px auto 80px; padding: 0 24px; }
 
@@ -166,12 +188,10 @@
 <body data-route="/agent">
   <header class="header">
     <div class="header-left">
-      <div>
-        <div class="header-title">Mission Control</div>
-        <div class="header-subtitle">AI Agent & Chat Memory</div>
-      </div>
+      <div class="header-title">Mission Control</div>
       <nav class="header-nav">
         <a href="/dashboard" class="menu-link">Dashboard</a>
+        <a href="/dashboard/transactions" class="menu-link">Transactions</a>
         <a href="/analytics" class="menu-link">Analytics</a>
         <a href="/agent" class="menu-link active">Agent</a>
         <a href="/investments" class="menu-link">Investments</a>
@@ -179,6 +199,13 @@
       </nav>
     </div>
     <div class="header-icons">
+      <label class="icon-link icon-select" title="Country and Currency">
+        <span>💱</span>
+        <select class="country-selector" aria-label="Country and currency">
+          <option value="UK">🇬🇧 United Kingdom (GBP)</option>
+          <option value="IN">🇮🇳 India (INR)</option>
+        </select>
+      </label>
       <a href="/ops" class="icon-link" title="Ops">⚙️</a>
       <a href="/logout" class="icon-link" title="Logout">↩</a>
     </div>

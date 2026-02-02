@@ -77,6 +77,9 @@ router.post('/upload/confirm-bank', async (req, res) => {
   try {
     const { institutionId } = req.body;
 
+    console.log('Bank confirmation - institutionId:', institutionId);
+    console.log('Session uploadState exists:', !!req.session.uploadState);
+
     if (!req.session.uploadState) {
       return res.status(400).json({ error: 'No upload in progress' });
     }
@@ -89,16 +92,23 @@ router.post('/upload/confirm-bank', async (req, res) => {
       WHERE i.id = $1
     `, [institutionId]);
 
+    console.log('Institution query result:', institutionResult.rows);
+
     if (!institutionResult.rows[0]) {
+      console.error('Institution not found for ID:', institutionId);
       return res.status(400).json({ error: 'Invalid institution selected' });
     }
 
     const institution = institutionResult.rows[0];
 
+    console.log('Setting institution:', institution);
+
     req.session.uploadState.institutionId = parseInt(institutionId);
     req.session.uploadState.bank = institution.bank_name;
     req.session.uploadState.country = institution.country_code;
     req.session.uploadState.step = 3; // Move to Step 3: Transaction Preview
+
+    console.log('Session uploadState after confirmation:', req.session.uploadState);
 
     res.json({ success: true, step: 3 });
   } catch (err) {

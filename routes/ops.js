@@ -129,6 +129,9 @@ router.get('/upload', (req, res) => {
 const { extractTransactionsFromText } = require('../lib/llm-extractor');
 const { insertTransactions } = require('../db/transactions');
 const pool = require('../db/connection');
+const { getModel, setModel } = require('../lib/ai/model-config');
+const axios = require('axios');
+const { getModel, setModel } = require('../lib/ai/model-config');
 
 function buildFeedback(query) {
   if (!query.status || !query.message) {
@@ -161,6 +164,55 @@ router.get('/', async (req, res) => {
   } catch (err) {
     console.error('Ops home error:', err);
     res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /ops/settings - Render global settings page
+router.get('/settings', async (req, res) => {
+  try {
+    const currentModel = await getModel();
+    res.render('ops/settings', {
+      title: 'Settings',
+      currentPage: 'settings',
+      currentModel
+    });
+  } catch (err) {
+    console.error('Ops settings error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /ops/settings/models - Fetch models from OpenRouter (filtered)
+router.get('/settings/models', async (req, res) => {
+  try {
+    if (!process.env.OPENROUTER_API_KEY) {
+      return res.status(400).json({ error: 'OPENROUTER_API_KEY not configured' });
+    }
+    const response = await axios.get('https://openrouter.ai/api/v1/models', {
+      headers: { Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}` }
+    });
+    const allowVendors = ['openai', 'anthropic', 'google'];
+    const models = (response.data?.data || []).filter(m => {
+      const id = m.id || '';
+      return allowVendors.some(v => id.startsWith(v + '/'));
+    });
+    res.json({ models });
+  } catch (err) {
+    console.error('Model fetch error:', err.message);
+    res.status(500).json({ error: 'Unable to load models' });
+  }
+});
+
+// POST /ops/settings/model - Save selected model id
+router.post('/settings/model', async (req, res) => {
+  try {
+    const { modelId } = req.body || {};
+    if (!modelId) return res.status(400).json({ error: 'modelId is required' });
+    await setModel(modelId);
+    res.json({ success: true, modelId });
+  } catch (err) {
+    console.error('Model save error:', err.message);
+    res.status(500).json({ error: 'Unable to save model' });
   }
 });
 

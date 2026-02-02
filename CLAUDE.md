@@ -62,11 +62,15 @@ See `/docs/plans/2026-02-01-mvp-1-0-design.md` for full design document.
    - Bank account management
    - Category customization
    - PDF uploads
+   - Global AI model selection
+7. Embedded AI assistant:
+   - Bottom-right chat widget on authenticated pages
+   - `/agent` page with persisted conversation history
 
 **Tech Stack:**
 - Backend: Node.js + Express
 - Database: PostgreSQL (Railway)
-- LLM: OpenRouter + Mistral (structured extraction)
+- LLM: OpenRouter (shared model config for chat + extraction)
 - Testing: Jest, Supertest, Playwright
 - Frontend: HTML/CSS/JS (Express views)
 
@@ -135,9 +139,10 @@ See `/docs/plans/2026-02-01-mvp-1-0-design.md` for full design document.
 ├── docs/
 │   └── plans/
 │       └── 2026-02-01-mvp-1-0-design.md  # MVP 1.0 design doc
+├── lib/ai/                         # OpenRouter chat services + tool orchestration
 ├── routes/                         # Express routes
 ├── views/                          # HTML templates
-├── public/                         # Static assets
+├── public/                         # Static assets (includes chat scripts)
 └── tests/                          # Test files (to be created)
 ```
 
@@ -179,6 +184,8 @@ The database is organized into 9 domains with 21+ tables. All schema is managed 
 - **001_initial_schema.sql** - Core foundation (users, accounts, transactions, categories)
 - **002_future_state_schema.sql** - Enhanced features (institutions, balances, investments, goals, AI)
 - **003_ai_chat.sql** - AI chat conversations and messages
+- **004_global_settings.sql** - Global key/value settings (includes active OpenRouter model)
+- **005_ai_messages_add_tool_payload.sql** - Backfill AI message tool metadata columns
 
 ### Domain 1: Identity & Geo
 | Table | Purpose | Key Fields |
@@ -237,8 +244,13 @@ Seeded categories: Groceries, Utilities, Transport, Entertainment, Dining, Healt
 ### Domain 9: AI Chat
 | Table | Purpose | Key Fields |
 |-------|---------|------------|
-| **`ai_conversations`** | Chat session metadata | `user_id`, `title`, `page_context`, `model_used`, `started_at`, `ended_at` |
-| **`ai_messages`** | Message history within conversations | `conversation_id`, `user_id`, `role` (user/assistant), `content`, `tokens_used`, `tools_called` (JSONB), `created_at` |
+| **`ai_conversations`** | Chat session metadata | `user_id`, `title`, `page_route`, `created_at`, `updated_at` |
+| **`ai_messages`** | Message history within conversations | `conversation_id`, `role` (user/assistant/tool), `content`, `tool_name`, `tool_payload` (JSONB), `created_at` |
+
+### Domain 10: Global Settings
+| Table | Purpose | Key Fields |
+|-------|---------|------------|
+| **`global_settings`** | Cross-feature configuration values | `key`, `value`, `created_at`, `updated_at` |
 
 ### Key Relationships
 ```
@@ -255,6 +267,8 @@ users ─┬─> bank_accounts ─> transactions ─> transaction_categories
        │                        └─> investments
        │
        └─> ai_conversations ─> ai_messages
+
+global_settings (shared app-level configuration)
 
 institutions ─┬─> bank_accounts
               └─> investments

@@ -1,7 +1,7 @@
 # MVP 1.0 Implementation Tracking
 
 **Start Date:** 2026-02-01
-**Status:** Foundation Complete - Awaiting User Testing
+**Status:** AI Assistant + Global Model Settings Implemented (Awaiting Broader Manual QA)
 
 ## Testing Protocol
 
@@ -82,11 +82,22 @@ All UI development must adhere to this design system. See CLAUDE.md for full the
 - [ ] Category assignment UI in upload preview
 
 ### Phase 7: Settings/Ops Page
-- [ ] Ops page main navigation
-- [ ] Upload PDF sub-page
-- [ ] Categories management sub-page
-- [ ] Banks management sub-page
-- [ ] Navigation between sub-sections
+- [x] Ops page main navigation
+- [x] Upload PDF sub-page
+- [x] Categories management sub-page
+- [x] Banks management sub-page
+- [x] Navigation between sub-sections
+- [x] Settings sub-page (global AI model selector)
+
+### Phase 8: AI Assistant & Chat
+- [x] `/api/ai` backend routes (chat + conversations + messages)
+- [x] AI chat orchestration with server-side read-only tools
+- [x] Chat persistence tables (`ai_conversations`, `ai_messages`)
+- [x] Embedded bottom-right chat widget on authenticated pages
+- [x] Dedicated `/agent` page for conversation history and continuation
+- [x] Global model setting in DB (`global_settings.openrouter_model`)
+- [x] OpenRouter model selector in `/ops/settings` (OpenAI/Claude/Gemini filtered)
+- [x] Upload extraction + AI chat both use the same selected model
 
 ### Phase 4: Testing (MVP 1.0 Foundation)
 - [x] Unit tests for core logic (20 tests passing)
@@ -175,8 +186,15 @@ Required `.env` variables:
 - `SESSION_SECRET` - For session management
 - `PORT` - Server port (default: 3000)
 
+Optional AI variables:
+- `OPENROUTER_MODEL` - Optional override model (DB setting is default source)
+- `OPENROUTER_BASE_URL` - Defaults to `https://openrouter.ai/api/v1`
+- `AI_MAX_HISTORY_MESSAGES` - Chat history window (default 20)
+- `AI_MAX_INPUT_CHARS` - Max input size (default 4000)
+
 ### Key Integration Points
-- **OpenRouter:** Used for PDF transaction extraction with Mistral
+- **OpenRouter:** Used for both PDF transaction extraction and embedded AI chat
+- **Global settings table:** Stores active `openrouter_model` for all AI features
 - **PostgreSQL:** All data persistence
 - **Railway:** Production deployment
 

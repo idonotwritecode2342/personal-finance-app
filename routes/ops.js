@@ -131,7 +131,6 @@ const { insertTransactions } = require('../db/transactions');
 const pool = require('../db/connection');
 const { getModel, setModel } = require('../lib/ai/model-config');
 const axios = require('axios');
-const { getModel, setModel } = require('../lib/ai/model-config');
 
 function buildFeedback(query) {
   if (!query.status || !query.message) {

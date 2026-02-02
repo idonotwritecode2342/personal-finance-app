@@ -21,35 +21,132 @@
       background: var(--bg-primary);
       color: var(--text-primary);
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      padding: 40px 20px;
     }
 
     .header {
-      max-width: 1200px;
-      margin: 0 auto 40px;
+      background: rgba(37, 37, 37, 0.95);
+      border-bottom: 1px solid var(--border);
+      padding: 24px 40px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(10px);
     }
 
-    .back-link {
-      color: var(--accent);
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .header-title {
+      font-size: 24px;
+      font-weight: 600;
+      letter-spacing: -0.5px;
+      color: var(--text-primary);
+    }
+
+    .header-subtitle {
+      font-size: 12px;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .header-controls {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .header-nav {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .menu-link {
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text-secondary);
       text-decoration: none;
-      font-size: 14px;
-      margin-bottom: 20px;
-      display: inline-block;
+      font-size: 13px;
+      padding: 8px 12px;
+      transition: all 0.2s ease;
+      background: var(--bg-tertiary);
     }
 
-    h1 {
+    .menu-link:hover {
+      background: var(--bg-primary);
+      color: var(--accent);
+      border-color: var(--accent);
+    }
+
+    .menu-link.active {
+      color: var(--accent);
+      border-color: var(--accent);
+      background: var(--bg-primary);
+    }
+
+    .icon-link {
+      width: 40px;
+      height: 40px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: var(--bg-tertiary);
+      color: var(--text-secondary);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+      font-size: 18px;
+    }
+
+    .icon-link:hover {
+      background: var(--bg-primary);
+      color: var(--accent);
+      border-color: var(--accent);
+    }
+
+    .country-selector {
+      padding: 8px 16px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .country-selector:hover,
+    .country-selector:focus {
+      border-color: var(--accent);
+      background: var(--bg-primary);
+      outline: none;
+    }
+
+    .page-title {
       font-size: 32px;
       margin-bottom: 10px;
+      margin-top: 40px;
     }
 
-    .subtitle {
+    .page-subtitle {
       color: var(--text-secondary);
       font-size: 14px;
+      margin-bottom: 24px;
     }
 
     .container {
       max-width: 1200px;
       margin: 0 auto;
+      padding: 40px 20px;
     }
 
     .filters-card {
@@ -294,6 +391,14 @@
       border-left: 3px solid var(--accent);
     }
 
+    .stat-card.positive {
+      border-left-color: #22c55e;
+    }
+
+    .stat-card.negative {
+      border-left-color: #ef4444;
+    }
+
     .stat-label {
       font-size: 12px;
       text-transform: uppercase;
@@ -309,6 +414,72 @@
       color: var(--accent);
     }
 
+    .stat-value.positive {
+      color: #22c55e;
+    }
+
+    .stat-value.negative {
+      color: #ef4444;
+    }
+
+    /* Date Preset Buttons */
+    .date-presets {
+      margin-bottom: 20px;
+    }
+
+    .date-presets label {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-secondary);
+      display: block;
+      margin-bottom: 12px;
+    }
+
+    .preset-buttons {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .preset-btn {
+      padding: 8px 16px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: transparent;
+      color: var(--text-secondary);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .preset-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .preset-btn.active {
+      background: var(--accent);
+      color: #000;
+      border-color: var(--accent);
+    }
+
+    /* Custom Date Inputs */
+    .custom-date-inputs {
+      display: none;
+      gap: 16px;
+      margin-top: 12px;
+    }
+
+    .custom-date-inputs.visible {
+      display: flex;
+    }
+
+    .custom-date-inputs .filter-group {
+      flex: 1;
+    }
+
     @media (max-width: 768px) {
       .filters-grid {
         grid-template-columns: 1fr;
@@ -320,6 +491,23 @@
 
       .btn {
         width: 100%;
+      }
+
+      .preset-buttons {
+        flex-direction: column;
+      }
+
+      .preset-btn {
+        width: 100%;
+        text-align: center;
+      }
+
+      .custom-date-inputs {
+        flex-direction: column;
+      }
+
+      .custom-date-inputs.visible {
+        display: flex;
       }
 
       table {
@@ -340,17 +528,78 @@
 </head>
 <body>
   <div class="header">
-    <a href="/dashboard" class="back-link">← Back to Dashboard</a>
-    <h1>📊 All Transactions</h1>
-    <p class="subtitle">View and filter your transaction history</p>
+    <div class="header-left">
+      <div>
+        <div class="header-title">💰 Mission Control</div>
+        <div class="header-subtitle">Transactions</div>
+      </div>
+    </div>
+    <div class="header-controls">
+      <select class="country-selector" id="countrySelector">
+        <option value="UK">🇬🇧 United Kingdom (GBP)</option>
+        <option value="IN">🇮🇳 India (INR)</option>
+      </select>
+      <div class="header-nav">
+        <a href="/dashboard" class="menu-link <%= pageKey === 'dashboard' ? 'active' : '' %>">Dashboard</a>
+        <a href="/dashboard/transactions" class="menu-link <%= pageKey === 'transactions' ? 'active' : '' %>">Transactions</a>
+        <a href="/analytics" class="menu-link">Analytics</a>
+        <a href="/agent" class="menu-link">Agent</a>
+        <a href="/investments" class="menu-link">Investments</a>
+        <a href="/goals" class="menu-link">Goals</a>
+      </div>
+      <a href="/ops" class="icon-link" title="Ops">⚙️</a>
+      <a href="/logout" class="menu-link">Logout</a>
+    </div>
   </div>
 
   <div class="container">
+    <h1 class="page-title">📊 All Transactions</h1>
+    <p class="page-subtitle">View and filter your transaction history</p>
     <!-- Filters -->
     <div class="filters-card">
       <h2>Filters</h2>
       <form id="filterForm" method="GET" action="/dashboard/transactions">
+        <!-- Hidden input for datePreset -->
+        <input type="hidden" id="datePresetInput" name="datePreset" value="<%= datePreset %>">
+
+        <!-- Date Preset Buttons -->
+        <div class="date-presets">
+          <label>Date Range</label>
+          <div class="preset-buttons">
+            <button type="button" class="preset-btn" data-preset="last7days" <%= datePreset === 'last7days' ? 'aria-pressed="true"' : '' %>>Last 7 Days</button>
+            <button type="button" class="preset-btn" data-preset="last30days" <%= datePreset === 'last30days' ? 'aria-pressed="true"' : '' %>>Last 30 Days</button>
+            <button type="button" class="preset-btn" data-preset="thisMonth" <%= datePreset === 'thisMonth' ? 'aria-pressed="true"' : '' %>>This Month</button>
+            <button type="button" class="preset-btn" data-preset="lastMonth" <%= datePreset === 'lastMonth' ? 'aria-pressed="true"' : '' %>>Last Month</button>
+            <button type="button" class="preset-btn" data-preset="lastQuarter" <%= datePreset === 'lastQuarter' ? 'aria-pressed="true"' : '' %>>Last Quarter</button>
+            <button type="button" class="preset-btn" data-preset="thisYear" <%= datePreset === 'thisYear' ? 'aria-pressed="true"' : '' %>>This Year</button>
+            <button type="button" class="preset-btn" data-preset="lastYear" <%= datePreset === 'lastYear' ? 'aria-pressed="true"' : '' %>>Last Year</button>
+            <button type="button" class="preset-btn" data-preset="custom" <%= datePreset === 'custom' ? 'aria-pressed="true"' : '' %>>Custom</button>
+          </div>
+        </div>
+
+        <!-- Custom Date Inputs -->
+        <div class="custom-date-inputs" id="customDateInputs" <%= datePreset === 'custom' ? 'class="custom-date-inputs visible"' : 'class="custom-date-inputs"' %>>
+          <div class="filter-group">
+            <label for="customFromDate">From Date</label>
+            <input type="date" id="customFromDate" name="fromDate" value="<%= finalFromDate %>">
+          </div>
+          <div class="filter-group">
+            <label for="customToDate">To Date</label>
+            <input type="date" id="customToDate" name="toDate" value="<%= finalToDate %>">
+          </div>
+        </div>
+
+        <!-- Other Filters Grid -->
         <div class="filters-grid">
+          <div class="filter-group">
+            <label for="transactionType">Transaction Type</label>
+            <select id="transactionType" name="transactionType">
+              <option value="all" <%= transactionType === 'all' ? 'selected' : '' %>>All Transactions</option>
+              <option value="debit" <%= transactionType === 'debit' ? 'selected' : '' %>>Debits Only</option>
+              <option value="credit" <%= transactionType === 'credit' ? 'selected' : '' %>>Credits Only</option>
+            </select>
+          </div>
+
           <div class="filter-group">
             <label for="category">Category</label>
             <select id="category" name="category">
@@ -361,16 +610,6 @@
               </option>
               <% }); %>
             </select>
-          </div>
-
-          <div class="filter-group">
-            <label for="fromDate">From Date</label>
-            <input type="date" id="fromDate" name="fromDate" value="<%= fromDate %>">
-          </div>
-
-          <div class="filter-group">
-            <label for="toDate">To Date</label>
-            <input type="date" id="toDate" name="toDate" value="<%= toDate %>">
           </div>
 
           <div class="filter-group">
@@ -401,6 +640,10 @@
       <div class="stat-card">
         <div class="stat-label">Showing</div>
         <div class="stat-value"><%= transactions.length %></div>
+      </div>
+      <div class="stat-card <%= netPL >= 0 ? 'positive' : 'negative' %>">
+        <div class="stat-label">Net P&L</div>
+        <div class="stat-value <%= netPL >= 0 ? 'positive' : 'negative' %>"><%= netPL >= 0 ? '+' : '' %><%= netPL.toFixed(2) %></div>
       </div>
     </div>
     <% } %>
@@ -488,6 +731,59 @@
       <% } %>
     </div>
   </div>
-  <%- include('partials/chat-widget'); %>
+
+  <script>
+    // Country selector
+    document.getElementById('countrySelector').addEventListener('change', function(e) {
+      // In production, this would reload transactions with new currency
+      console.log('Selected country:', e.target.value);
+    });
+
+    // Date preset button handling
+    const presetButtons = document.querySelectorAll('.preset-btn');
+    const datePresetInput = document.getElementById('datePresetInput');
+    const customDateInputs = document.getElementById('customDateInputs');
+    const filterForm = document.getElementById('filterForm');
+
+    function updateActiveState() {
+      const currentPreset = datePresetInput.value;
+      presetButtons.forEach(btn => {
+        if (btn.dataset.preset === currentPreset) {
+          btn.classList.add('active');
+          btn.setAttribute('aria-pressed', 'true');
+        } else {
+          btn.classList.remove('active');
+          btn.setAttribute('aria-pressed', 'false');
+        }
+      });
+    }
+
+    function showHideCustomInputs() {
+      if (datePresetInput.value === 'custom') {
+        customDateInputs.classList.add('visible');
+      } else {
+        customDateInputs.classList.remove('visible');
+      }
+    }
+
+    // Initialize active state on page load
+    updateActiveState();
+    showHideCustomInputs();
+
+    // Preset button click handlers
+    presetButtons.forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        datePresetInput.value = btn.dataset.preset;
+        updateActiveState();
+        showHideCustomInputs();
+      });
+    });
+
+    // Handle form submission to include the datePreset value
+    filterForm.addEventListener('submit', function(e) {
+      // The hidden datePreset input will automatically be included in the form submission
+    });
+  </script>
 </body>
 </html>

@@ -5,7 +5,16 @@ async function insertTransactions(userId, transactions, bankAccountId) {
     return [];
   }
 
-  const query = `
+  const duplicateCheckQuery = `
+    SELECT id FROM transactions
+    WHERE bank_account_id = $1
+      AND transaction_date = $2
+      AND amount = $3
+      AND (description = $4 OR merchant = $5)
+    LIMIT 1
+  `;
+
+  const insertQuery = `
     INSERT INTO transactions (
       user_id, bank_account_id, transaction_date, amount, currency,
       description, merchant, transaction_type, category_id, created_at
@@ -15,10 +24,27 @@ async function insertTransactions(userId, transactions, bankAccountId) {
   `;
 
   const results = [];
+  let skippedDuplicates = 0;
 
   for (const tx of transactions) {
     try {
-      const result = await pool.query(query, [
+      // Check for duplicate
+      const duplicateCheck = await pool.query(duplicateCheckQuery, [
+        bankAccountId,
+        tx.date,
+        tx.amount,
+        tx.description || '',
+        tx.merchant || ''
+      ]);
+
+      if (duplicateCheck.rows.length > 0) {
+        // Transaction already exists, skip it
+        skippedDuplicates++;
+        continue;
+      }
+
+      // Insert new transaction
+      const result = await pool.query(insertQuery, [
         userId,
         bankAccountId,
         tx.date,
@@ -36,6 +62,7 @@ async function insertTransactions(userId, transactions, bankAccountId) {
     }
   }
 
+  console.log(`Inserted ${results.length} new transactions, skipped ${skippedDuplicates} duplicates`);
   return results;
 }
 
